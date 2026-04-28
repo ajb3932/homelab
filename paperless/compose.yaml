@@ -21,7 +21,7 @@ services:
     volumes:
       - /lab/appdata/paperless/redis:/data
   paperless:
-    image: ghcr.io/paperless/paperless-ngx:latest
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
     restart: unless-stopped
     container_name: paperless
     depends_on:
