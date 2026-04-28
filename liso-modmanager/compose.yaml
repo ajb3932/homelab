@@ -5,7 +5,7 @@ services:
     environment:
       - DOCKER_MODS=linuxserver/mods:swag-dashboard|linuxserver/mods:universal-docker
     volumes:
-      - /mnt/nvme/appdata/modmanager:/modcache
+      - ${DIR}:/modcache
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 networks: {}
