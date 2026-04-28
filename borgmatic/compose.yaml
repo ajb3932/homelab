@@ -12,7 +12,7 @@ services:
       - /lab/appdata:/src/appdata:ro
       - /lab/immmich/:/src/photos:ro
       - /lab/archive/nextcloud:/src/nextcloud:ro
-      - /lab/archive/borg/:/src/data:ro
+      - /lab/data/:/src/data#:ro
     environment:
       - TZ=Europe/London
       - BORG_PASSPHRASE=${BORG_PASSPHRASE}
