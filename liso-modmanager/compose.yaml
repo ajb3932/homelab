@@ -1,6 +1,7 @@
 services:
   modmanager:
-    env: stack.env
+    env_file:
+      - stack.env
     image: lscr.io/linuxserver/modmanager:latest
     container_name: modmanager
     environment:
