@@ -9,12 +9,12 @@ services:
       PUID: "1000"
       PGID: "1000"
       TZ: Europe/London
-      URL: piandchips.uk
+      URL: ${URL}
       SUBDOMAINS: wildcard
       VALIDATION: dns
       CERTPROVIDER: letsencrypt
       DNSPLUGIN: cloudflare
-      EMAIL: alex@jb-mail.uk
+      EMAIL: ${EMAIL}
       staging: "true"
       SWAG_AUTORELOAD: "true"
       DOCKER_MODS: linuxserver/mods:swag-dashboard
