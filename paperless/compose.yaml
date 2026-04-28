@@ -12,7 +12,7 @@ services:
       - PGID=1000
       - PUID=1000
       - PAPERLESS_POST_DOCUMENT_URL=https://docs.piandchips.uk/api/documents/post_document/
-      - PAPERLESS_TOKEN=e74da4437b5cfc2f407987060f6173e825a6ec74
+      - PAPERLESS_TOKEN=${PAPERLESS_TOKEN}
     volumes:
       - /lab/appdata/paperless/hp-scan:/scan
   broker:
@@ -35,7 +35,7 @@ services:
       PAPERLESS_REDIS: redis://broker:6379
       PAPERLESS_URL: https://docs.piandchips.uk
       PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
-      PAPERLESS_SOCIALACCOUNT_PROVIDERS: '{"openid_connect":{"SCOPE":["openid","profile","email"],"OAUTH_PKCE_ENABLED":true,"APPS":[{"provider_id":"authelia","name":"Authelia","client_id":"paperless","secret":"$CLIENT_SECRET","settings":{"server_url":"https://auth.piandchips.uk","token_auth_method":"client_secret_basic"}}]}}'
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS: ${AUTH_PROVIDER}
     networks:
       - default
       - proxy-net
