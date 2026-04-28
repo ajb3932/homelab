@@ -6,6 +6,5 @@ services:
     ports:
       - 8765:8765
     volumes:
-      - /mnt/nvme/appdata/motioneye/etc:/etc/motioneye
-      - /mnt/nvme/appdata/motioneye/var_lib:/var/lib/motioneye
-networks: {}
+      - /lab/appdata/motioneye/etc:/etc/motioneye
+      - /lab/appdata/motioneye/var_lib:/var/lib/motioneye
