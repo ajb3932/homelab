@@ -1,0 +1,122 @@
+services:
+  swag:
+    image: lscr.io/linuxserver/swag
+    container_name: swag
+    hostname: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Europe/London
+      URL: piandchips.uk
+      SUBDOMAINS: wildcard
+      VALIDATION: dns
+      CERTPROVIDER: letsencrypt
+      DNSPLUGIN: cloudflare
+      EMAIL: alex@jb-mail.uk
+      staging: "true"
+      SWAG_AUTORELOAD: "true"
+      DOCKER_MODS: linuxserver/mods:swag-dashboard
+    volumes:
+      - /mnt/nvme/appdata/swag/:/config
+      - /mnt/nvme/appdata/modmanager:/modcache
+    ports:
+      - 81:81
+      - 80:80
+      - 443:443
+    restart: always
+    networks:
+      - proxy-net
+      - default
+  cloudflare-ddns:
+    container_name: cloudflare-ddns
+    hostname: cloudflare-ddns
+    image: favonia/cloudflare-ddns:latest
+    network_mode: host
+    restart: always
+    user: 1000:1000
+    read_only: true
+    cap_drop:
+      - all
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - CLOUDFLARE_API_TOKEN=$API_KEY
+      - DOMAINS=$DOMAIN
+      - PROXIED=false
+      - IP6_PROVIDER=none
+  authelia:
+    image: authelia/authelia
+    container_name: authelia
+    hostname: authelia
+    volumes:
+      - /mnt/nvme/appdata/authelia/app:/config
+      - /mnt/nvme/appdata/authelia/secrets:/secrets
+    environment:
+      TZ: Europe/London
+      AUTHELIA_STORAGE_ENCRYPTION_KEY_FILE: /secrets/storage_encryption_key
+      AUTHELIA_STORAGE_MYSQL_PASSWORD_FILE: /secrets/db_password
+      AUTHELIA_SESSION_SECRET_FILE: /secrets/session_secret
+      AUTHELIA_SESSION_REDIS_PASSWORD_FILE: /secrets/redis_password
+      AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET_FILE: /secrets/jwt_secret
+      AUTHELIA_IDENTITY_PROVIDERS_OIDC_HMAC_SECRET_FILE: /secrets/hmac_secret
+      AUTHELIA_DUO_API_SECRET_KEY_FILE: /secrets/duo_key
+      AUTHELIA_NOTIFIER_SMTP_PASSWORD_FILE: /secrets/smtp_password
+    networks:
+      - proxy-net
+      - default
+    restart: always
+  authelia-redis:
+    image: redis:alpine
+    container_name: authelia-redis
+    hostname: redis
+    volumes:
+      - /mnt/nvme/appdata/authelia/redis:/data
+    restart: always
+    environment:
+      ALLOW_EMPTY_PASSWORD: no
+      REDIS_PASSWORD: $REDIS_PASSWORD
+      TZ: Europe/London
+    depends_on:
+      - authelia-db
+    labels:
+      - diun.enable=false
+  authelia-db:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: authelia-db
+    hostname: mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+    volumes:
+      - /mnt/nvme/appdata/authelia/db:/config
+    restart: always
+    networks:
+      - db_network
+      - default
+    labels:
+      - diun.enable=false
+  theme-park:
+    image: ghcr.io/themepark-dev/theme.park
+    container_name: theme-park
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+      - TP_URLBASE=themepark
+    restart: unless-stopped
+    networks:
+      - proxy-net
+networks:
+  default:
+    driver: bridge
+  proxy-net:
+    external: true
+  db_network:
+    external: true

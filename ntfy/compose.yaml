@@ -1,0 +1,16 @@
+services:
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: ntfy
+    command:
+      - serve
+    environment:
+      - TZ=UTC
+    volumes:
+      - /var/cache/ntfy:/var/cache/ntfy
+      - /mnt/nvme/appdata/ntfy:/etc/ntfy
+    restart: unless-stopped
+networks:
+  default:
+    name: proxy-net
+    external: true

@@ -1,0 +1,66 @@
+services:
+  bookstack-db:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: bookstack-db
+    hostname: mariadb
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+    volumes:
+      - /mnt/nvme/appdata/bookstack/db:/config
+    restart: unless-stopped
+    labels:
+      - diun.enable=false
+    networks:
+      - db_network
+      - default
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:latest
+    container_name: bookstack
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - APP_URL=${APP_URL}
+      - APP_KEY=${APP_KEY}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_DATABASE=${MYSQL_DATABASE}
+      - MAIL_DRIVER=${MAIL_DRIVER}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - AUTH_METHOD=${AUTH_METHOD}
+      - AUTH_AUTO_INITIATE=${AUTH_AUTO_INITIATE}
+      - OIDC_NAME=${OIDC_NAME}
+      - OIDC_ISSUER=${OIDC_ISSUER}
+      - OIDC_ISSUER_DISCOVER=${OIDC_ISSUER_DISCOVER}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET}
+      - OIDC_DISPLAY_NAME_CLAIMS=${OIDC_DISPLAY_NAME_CLAIMS}
+      - OIDC_END_SESSION_ENDPOINT=${OIDC_END_SESSION_ENDPOINT}
+    volumes:
+      - /mnt/nvme/appdata/bookstack/config:/config
+    restart: unless-stopped
+    networks:
+      - proxy-net
+      - default
+networks:
+  default:
+    driver: bridge
+  proxy-net:
+    external: true
+  db_network:
+    external: true

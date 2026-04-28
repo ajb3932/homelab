@@ -1,0 +1,45 @@
+services:
+  hp-scan:
+    image: docker.io/manuc66/node-hp-scan-to:latest
+    restart: unless-stopped
+    hostname: hp-scan
+    container_name: hp-scan
+    environment:
+      - IP=10.0.0.3
+      - LABEL=Paperless
+      - TZ=Europe/London
+      - PATTERN="scan"_dd-mm-yyyy_hh-MM-ss
+      - PGID=1000
+      - PUID=1000
+      - PAPERLESS_POST_DOCUMENT_URL=https://docs.piandchips.uk/api/documents/post_document/
+      - PAPERLESS_TOKEN=e74da4437b5cfc2f407987060f6173e825a6ec74
+    volumes:
+      - /mnt/nvme/appdata/hp-scan/:/scan
+  broker:
+    image: docker.io/library/redis:8
+    restart: unless-stopped
+    volumes:
+      - /mnt/nvme/appdata/paperless-ngx/redis:/data
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    restart: unless-stopped
+    container_name: paperless
+    depends_on:
+      - broker
+    volumes:
+      - /mnt/nvme/appdata/paperless-ngx/data:/usr/src/paperless/data
+      - /mnt/nvme/appdata/paperless-ngx/media:/usr/src/paperless/media
+      - /mnt/nvme/appdata/paperless-ngx/export:/usr/src/paperless/export
+      - /mnt/nvme/appdata/paperless-ngx/consume:/usr/src/paperless/consume
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_URL: https://docs.piandchips.uk
+      PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS: '{"openid_connect":{"SCOPE":["openid","profile","email"],"OAUTH_PKCE_ENABLED":true,"APPS":[{"provider_id":"authelia","name":"Authelia","client_id":"paperless","secret":"$CLIENT_SECRET","settings":{"server_url":"https://auth.piandchips.uk","token_auth_method":"client_secret_basic"}}]}}'
+    networks:
+      - default
+      - proxy-net
+networks:
+  default: null
+  proxy-net:
+    external: true

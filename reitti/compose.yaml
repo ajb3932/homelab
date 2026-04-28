@@ -1,0 +1,127 @@
+services:
+  reitti:
+    image: dedicatedcode/reitti:latest
+    ports:
+      - 8088:8080
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgis:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+      tile-cache:
+        condition: service_healthy
+    volumes:
+      - /mnt/nvme/appdata/reitti/reitti-data:/data/
+    environment:
+      PHOTON_BASE_URL: http://photon:2322
+      POSTGIS_USER: reitti
+      POSTGIS_PASSWORD: reitti
+      POSTGIS_DB: reittidb
+      POSTGIS_HOST: postgis
+    restart: unless-stopped
+  postgis:
+    image: postgis/postgis:17-3.5-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: reitti
+      POSTGRES_PASSWORD: reitti
+      POSTGRES_DB: reittidb
+    volumes:
+      - /mnt/nvme/appdata/reitti/postgis-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U reitti -d reittidb
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: reitti
+      RABBITMQ_DEFAULT_PASS: reitti
+    volumes:
+      - /mnt/nvme/appdata/reitti/rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmq-diagnostics
+        - check_port_connectivity
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - /mnt/nvme/appdata/reitti/redis-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  photon:
+    image: rtuszik/photon-docker:1.3.0
+    restart: unless-stopped
+    environment:
+      - UPDATE_STRATEGY=PARALLEL
+      - REGION=de
+    volumes:
+      - /mnt/nvme/appdata/reitti/photon-data:/photon/data
+  tile-cache:
+    image: nginx:alpine
+    environment:
+      NGINX_CACHE_SIZE: 1g
+    command: >
+      sh -c "
+
+      mkdir -p /var/cache/nginx/tiles
+
+      cat > /etc/nginx/nginx.conf << 'EOF'
+
+      events {
+        worker_connections 1024;
+      }
+
+      http {
+        proxy_cache_path /var/cache/nginx/tiles levels=1:2 keys_zone=tiles:10m max_size=1g inactive=30d use_temp_path=off;
+
+        server {
+          listen 80;
+          location / {
+            proxy_pass https://tile.openstreetmap.org/;
+            proxy_set_header Host tile.openstreetmap.org;
+            proxy_set_header User-Agent \"Reitti/1.0 \\(+https://github.com/dedicatedcode/reitti; contact: reitti@dedicatedcode.com\\)\";
+            proxy_cache tiles;
+            proxy_cache_valid 200 30d;
+            proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+          }
+        }
+      }
+
+      EOF
+
+      nginx -g 'daemon off;'"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --quiet
+        - --tries=1
+        - --spider
+        - http://127.0.0.1/0/0/0.png
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      
+networks:
+  default:
+    driver: bridge

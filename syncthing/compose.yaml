@@ -1,0 +1,20 @@
+services:
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:latest
+    container_name: syncthing
+    hostname: syncthing
+    environment:
+      - PUID=99
+      - PGID=100
+      - TZ=Europe/London
+    volumes:
+      - /mnt/nvme/appdata/syncthing/config:/config
+      - /mnt/user/media/games/sync/saves:/sync/saves
+      - /mnt/user/media/games/sync/roms:/sync/roms
+      - /mnt/user/media/books:/sync/books
+    ports:
+      - 8384:8384
+      - 22000:22000/tcp
+      - 22000:22000/udp
+      - 21027:21027/udp
+    restart: unless-stopped

@@ -1,0 +1,53 @@
+services:
+  romm:
+    image: rommapp/romm:latest
+    container_name: romm
+    restart: unless-stopped
+    environment:
+      - DB_HOST=romm-db
+      - DB_NAME=${MDB_DATABASE}
+      - DB_USER=${MDB_USR}
+      - DB_PASSWD=${MDB_PW}
+      - ROMM_AUTH_SECRET_KEY=${AUTH_KEY}
+      - SCREENSCRAPER_USER=${SS_USER}
+      - SCREENSCRAPER_PASSWORD=${SS_PW}
+      - IGDB_CLIENT_ID=${IGDB_ID}
+      - IGDB_CLIENT_SECRET=${IGDB_SECRET}
+      #- RETROACHIEVEMENTS_API_KEY=
+      - STEAMGRIDDB_API_KEY=${STEAMGRID}
+      - HASHEOUS_API_ENABLED=true
+    volumes:
+      - ${LIBRARY_PATH}:/romm/library
+      - ${APPDATA_PATH}/resources:/romm/resources
+      - ${APPDATA_PATH}/redis:/redis-data
+      - ${APPDATA_PATH}/assets:/romm/assets
+      - ${APPDATA_PATH}/config:/romm/config
+    ports:
+      - 8045:8080
+    depends_on:
+      romm-db:
+        condition: service_healthy
+        restart: true
+  romm-db:
+    image: mariadb:latest
+    container_name: romm-db
+    restart: unless-stopped
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MDB_ROOTPW}
+      - MARIADB_DATABASE=${MDB_DATABASE}
+      - MARIADB_USER=${MDB_USR}
+      - MARIADB_PASSWORD=${MDB_PW}
+    volumes:
+      - ${APPDATA_PATH}/mysql:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      start_period: 30s
+      start_interval: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+networks: {}

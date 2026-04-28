@@ -1,0 +1,53 @@
+services:
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v3.14.0
+    container_name: mealie
+    restart: always
+    volumes:
+      - /mnt/nvme/appdata/mealie/data:/app/data/
+    environment:
+      ALLOW_SIGNUP: "false"
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/London
+      BASE_URL: https://menu.piandchips.uk
+      # SMTP
+      SMTP_HOST: smtp.protonmail.ch
+      SMTP_PORT: 587
+      SMTP_AUTH_STRATEGY: TLS
+      SMTP_FROM_NAME: Mealie
+      SMTP_FROM_EMAIL: admin@piandchips.uk
+      SMTP_USER: admin@piandchips.uk
+      SMTP_PASSWORD: ${SMTP_PASS}
+      # OIDC
+      OIDC_AUTH_ENABLED: "true"
+      OIDC_SIGNUP_ENABLED: "true"
+      OIDC_CONFIGURATION_URL: https://auth.piandchips.uk/.well-known/openid-configuration
+      OIDC_CLIENT_ID: mealie
+      OIDC_CLIENT_SECRET: ${AUTH_SECRET}
+      OIDC_PROVIDER_NAME: Authelia
+      OIDC_REMEMBER_ME: "true"
+      OIDC_SIGNING_ALGORITHM: RS256
+      OIDC_ADMIN_GROUP: admins
+      OIDC_GROUPS_CLAIM: groups
+      # Light mode colors
+      THEME_LIGHT_PRIMARY: '#5E9BD1'
+      THEME_LIGHT_ACCENT: '#A3C9E8'
+      THEME_LIGHT_SECONDARY: '#4F89BA'
+      THEME_LIGHT_SUCCESS: '#4CAF50'
+      THEME_LIGHT_INFO: '#4A9ED8'
+      THEME_LIGHT_WARNING: '#EAC46B'
+      THEME_LIGHT_ERROR: '#E57373'
+      # Dark mode colors
+      THEME_DARK_PRIMARY: '#5A8FBF'
+      THEME_DARK_ACCENT: '#90B8D9'
+      THEME_DARK_SECONDARY: '#406D96'
+      THEME_DARK_SUCCESS: '#81C784'
+      THEME_DARK_INFO: '#78B2C0'
+      THEME_DARK_WARNING: '#EBC86E'
+      THEME_DARK_ERROR: '#E57373'
+    networks:
+      - proxy-net
+networks:
+  proxy-net:
+    external: true

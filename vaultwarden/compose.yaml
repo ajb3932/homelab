@@ -1,0 +1,29 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    hostname: vaultwarden
+    restart: unless-stopped
+    environment:
+      DOMAIN: $DOMAIN
+      ADMIN_TOKEN: $ADMIN_TOKEN
+      SIGNUPS_ALLOWED: "false"
+      LOG_FILE: /data/vaultwarden.log
+      LOG_LEVEL: info
+      PUSH_ENABLED: "true"
+      PUSH_INSTALLATION_ID: $PUSH_INSTALLATION_ID
+      PUSH_INSTALLATION_KEY: $PUSH_INSTALLATION_KEY
+      PUSH_RELAY_URI: https://api.bitwarden.eu
+      PUSH_IDENTITY_URI: https://identity.bitwarden.eu
+      SMTP_HOST: $SMTP_HOST
+      SMTP_FROM: $SMTP_FROM
+      SMTP_PORT: $SMTP_PORT
+      SMTP_SSL: $SMTP_SSL
+      SMTP_USERNAME: $SMTP_USERNAME
+      SMTP_PASSWORD: $SMTP_PASSWORD
+    volumes:
+      - /mnt/nvme/appdata/vaultwarden:/data/
+networks:
+  default:
+    name: proxy-net
+    external: true
