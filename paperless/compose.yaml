@@ -14,23 +14,23 @@ services:
       - PAPERLESS_POST_DOCUMENT_URL=https://docs.piandchips.uk/api/documents/post_document/
       - PAPERLESS_TOKEN=e74da4437b5cfc2f407987060f6173e825a6ec74
     volumes:
-      - /mnt/nvme/appdata/hp-scan/:/scan
+      - /lab/appdata/paperless/hp-scan:/scan
   broker:
     image: docker.io/library/redis:8
     restart: unless-stopped
     volumes:
-      - /mnt/nvme/appdata/paperless-ngx/redis:/data
+      - /lab/appdata/paperless/redis:/data
   paperless:
-    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    image: ghcr.io/paperless/paperless-ngx:latest
     restart: unless-stopped
     container_name: paperless
     depends_on:
       - broker
     volumes:
-      - /mnt/nvme/appdata/paperless-ngx/data:/usr/src/paperless/data
-      - /mnt/nvme/appdata/paperless-ngx/media:/usr/src/paperless/media
-      - /mnt/nvme/appdata/paperless-ngx/export:/usr/src/paperless/export
-      - /mnt/nvme/appdata/paperless-ngx/consume:/usr/src/paperless/consume
+      - /lab/appdata/paperless/data:/usr/src/paperless/data
+      - /lab/appdata/paperless/media:/usr/src/paperless/media
+      - /lab/appdata/paperless/export:/usr/src/paperless/export
+      - /lab/appdata/paperless/consume:/usr/src/paperless/consume
     environment:
       PAPERLESS_REDIS: redis://broker:6379
       PAPERLESS_URL: https://docs.piandchips.uk
