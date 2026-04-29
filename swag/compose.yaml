@@ -15,7 +15,7 @@ services:
       CERTPROVIDER: letsencrypt
       DNSPLUGIN: cloudflare
       EMAIL: ${EMAIL}
-      staging: "true"
+      STAGING: "true"
       SWAG_AUTORELOAD: "true"
       DOCKER_MODS: linuxserver/mods:swag-dashboard
     volumes:
