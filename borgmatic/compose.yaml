@@ -3,8 +3,8 @@ services:
     image: ghcr.io/borgmatic-collective/borgmatic
     container_name: borgmatic
     volumes:
-      - /lab/archive/borgmatic/data:/mnt/borg-repository
-      - /lab/archive/borgmatic/cache:/root/.cache/borg
+      - /lab/pool/archive/borg/data:/mnt/borg-repository
+      - /lab/pool/archive/borg/cache:/root/.cache/borg
       - /lab/appdata/borgmatic/.config:/etc/borgmatic.d/
       - /lab/appdata/borgmatic/borg_keys:/root/.config/borg
       - /lab/appdata/borgmatic/.ssh:/root/.ssh
