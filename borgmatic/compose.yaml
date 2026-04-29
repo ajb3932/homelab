@@ -10,7 +10,7 @@ services:
       - /lab/appdata/borgmatic/.ssh:/root/.ssh
       # Source Dirs
       - /lab/appdata:/src/appdata:ro
-      - /lab/immmich/:/src/photos:ro
+      - /lab/immich/:/src/photos:ro
       - /lab/archive/nextcloud:/src/nextcloud:ro
       - /lab/data/:/src/data
     environment:
