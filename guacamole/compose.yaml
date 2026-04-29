@@ -51,8 +51,7 @@ services:
     volumes:
       - /lab/appdata/guacamole/record:/record:rw
     restart: always
-    ports:
-    8002:8080
+    ports: 8002:8080
     networks:
       - proxy-net
       - default
