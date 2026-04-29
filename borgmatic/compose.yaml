@@ -9,9 +9,9 @@ services:
       - /lab/appdata/borgmatic/borg_keys:/root/.config/borg
       - /lab/appdata/borgmatic/.ssh:/root/.ssh
       # Source Dirs
-      - /lab/appdata:/src/appdata:ro
-      - /lab/immich/:/src/photos:ro
-      - /lab/pool/archive/nextcloud:/src/nextcloud:ro
+      - /lab/appdata:/src/appdata
+      - /lab/immich/:/src/photos
+      - /lab/pool/archive/nextcloud:/src/nextcloud
       - /lab/data/:/src/data
     environment:
       - TZ=Europe/London
