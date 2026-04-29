@@ -22,7 +22,9 @@ services:
       SMTP_USERNAME: $SMTP_USERNAME
       SMTP_PASSWORD: $SMTP_PASSWORD
     volumes:
-      - /mnt/nvme/appdata/vaultwarden:/data/
+      - /lab/appdata/vaultwarden:/data/
+    ports:
+      - 8001:80
 networks:
   default:
     name: proxy-net
