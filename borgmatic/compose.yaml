@@ -11,7 +11,7 @@ services:
       # Source Dirs
       - /lab/appdata:/src/appdata:ro
       - /lab/immich/:/src/photos:ro
-      - /lab/archive/nextcloud:/src/nextcloud:ro
+      - /lab/pool/archive/nextcloud:/src/nextcloud:ro
       - /lab/data/:/src/data
     environment:
       - TZ=Europe/London
