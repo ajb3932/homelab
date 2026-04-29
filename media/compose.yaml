@@ -10,7 +10,7 @@ services:
       - TS_USERSPACE=false
       - TS_EXTRA_ARGS=--exit-node=100.111.63.93 --exit-node-allow-lan-access=true
     volumes:
-      - /mnt/nvme/appdata/media/tailscale:/var/lib/tailscale
+      - /lab/appdata/media/tailscale:/var/lib/tailscale
     ports:
       - "9191:9191" 
       - "9192:8080"
@@ -30,8 +30,8 @@ services:
       - WEBUI_PORT=8080
       - TORRENTING_PORT=6881
     volumes:
-      - /mnt/nvme/appdata/qbittorrent:/config
-      - /mnt/user/media:/media
+      - /lab/appdata/qbittorrent:/config
+      - /lab/pool/media:/media
     restart: unless-stopped
   dispatcharr:
     image: ghcr.io/dispatcharr/dispatcharr:latest
@@ -41,7 +41,7 @@ services:
     depends_on:
       - tailscale
     volumes:
-      - /mnt/nvme/appdata/media/dispatcharr:/data
+      - /lab/appdata/media/dispatcharr:/data
     environment:
       - DISPATCHARR_ENV=aio
       - REDIS_HOST=localhost
@@ -57,8 +57,8 @@ services:
       - NZBGET_USER=$NZBGET_USER
       - NZBGET_PASS=$NZBGET_PASS
     volumes:
-      - /mnt/nvme/appdata/media/nzbget:/config
-      - /mnt/user/media/downloads:/media/downloads
+      - /lab/appdata/media/nzbget:/config
+      - /lab/pool/media/downloads:/media/downloads
     ports:
       - 6789:6789
     restart: unless-stopped
@@ -70,7 +70,7 @@ services:
       - PGID=1000
       - TZ=${TZ}
     volumes:
-      - /mnt/nvme/appdata/media/prowlarr:/config
+      - /lab/appdata/media/prowlarr:/config
     ports:
       - 9696:9696
     restart: unless-stopped
@@ -82,8 +82,8 @@ services:
       - PGID=1000
       - TZ=${TZ}
     volumes:
-      - /mnt/nvme/appdata/media/sonarr:/config
-      - /mnt/user/media:/media
+      - /lab/appdata/media/sonarr:/config
+      - /lab/pool/media:/media
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -95,8 +95,8 @@ services:
       - PGID=1000
       - TZ=${TZ}
     volumes:
-      - /mnt/nvme/appdata/media/sonarr-kids:/config
-      - /mnt/user/media:/media
+      - /lab/appdata/media/sonarr-kids:/config
+      - /lab/pool/media:/media
     ports:
       - 8888:8888
     restart: unless-stopped
@@ -108,8 +108,8 @@ services:
       - PGID=1000
       - TZ=${TZ}
     volumes:
-      - /mnt/nvme/appdata/media/radarr:/config
-      - /mnt/user/media:/media
+      - /lab/appdata/media/radarr:/config
+      - /lab/pool/media:/media
     ports:
       - 7878:7878
     restart: unless-stopped
@@ -121,8 +121,8 @@ services:
       - PGID=1000
       - TZ=${TZ}
     volumes:
-      - /mnt/nvme/appdata/media/radarr-christmas:/config
-      - /mnt/user/media:/media
+      - /lab/appdata/media/radarr-christmas:/config
+      - /lab/pool/media:/media
     ports:
       - 7676:7676
     restart: unless-stopped
@@ -134,8 +134,8 @@ services:
       - PGID=1000
       - TZ=${TZ}
     volumes:
-      - /mnt/nvme/appdata/media/radarr-kids:/config
-      - /mnt/user/media:/media
+      - /lab/appdata/media/radarr-kids:/config
+      - /lab/pool/media:/media
     ports:
       - 7575:7575
     restart: unless-stopped
@@ -163,11 +163,11 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=all
       - NVIDIA_VISIBLE_DEVICES=all
     volumes:
-      - /mnt/nvme/appdata/media/tdarr/server:/app/server
-      - /mnt/nvme/appdata/media/tdarr/configs:/app/configs
-      - /mnt/nvme/appdata/media/tdarr/logs:/app/logs
-      - /mnt/user/media/:/media
-      - /mnt/user/media/tdarr:/temp
+      - /lab/appdata/media/tdarr/server:/app/server
+      - /lab/appdata/media/tdarr/configs:/app/configs
+      - /lab/appdata/media/tdarr/logs:/app/logs
+      - /lab/pool/media/:/media
+      - /lab/pool/media/tdarr:/temp
   jellyfin:
     image: lscr.io/linuxserver/jellyfin:latest
     container_name: jellyfin
@@ -177,8 +177,8 @@ services:
       - TZ=${TZ}
       - JELLYFIN_PublishedServerUrl=https://media.piandchips.uk
     volumes:
-      - /mnt/nvme/appdata/media/jellyfin:/config
-      - /mnt/user/media/:/media
+      - /lab/appdata/media/jellyfin:/config
+      - /lab/pool/media/:/media
     ports:
       - 7359:7359/udp
       - 1900:1900/udp
@@ -198,7 +198,7 @@ services:
       - LOG_LEVEL=info
       - TZ=${TZ}
     volumes:
-      - /mnt/nvme/appdata/media/jellyseer:/app/config
+      - /lab/appdata/media/jellyseer:/app/config
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status
         || exit 1
@@ -248,9 +248,9 @@ services:
       grimmory-db:
         condition: service_healthy
     volumes:
-      - /mnt/nvme/appdata/booklore/data:/app/data
-      - /mnt/user/media/books:/books
-      - /mnt/nvme/appdata/booklore/bookdrop:/bookdrop
+      - /lab/appdata/booklore/data:/app/data
+      - /lab/pool/media/books:/books
+      - /lab/appdata/booklore/bookdrop:/bookdrop
     restart: unless-stopped
     ports:
       - 6060:6060
@@ -270,7 +270,7 @@ services:
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
-      - /mnt/nvme/appdata/booklore/mariadb:/config
+      - /lab/appdata/booklore/mariadb:/config
     restart: unless-stopped
     healthcheck:
       test:
