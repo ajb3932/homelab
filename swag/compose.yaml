@@ -12,7 +12,8 @@ services:
       URL: ${URL}
       SUBDOMAINS: wildcard
       VALIDATION: dns
-      CERTPROVIDER: letsencrypt
+      #CERTPROVIDER: letsencrypt
+      CERTPROVIDER: zerossl
       DNSPLUGIN: cloudflare
       EMAIL: ${EMAIL}
       STAGING: "true"
