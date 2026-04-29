@@ -36,6 +36,8 @@ services:
       PAPERLESS_URL: https://docs.piandchips.uk
       PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
       PAPERLESS_SOCIALACCOUNT_PROVIDERS: ${AUTH_PROVIDER}
+    ports:
+      - 8000:8000
     networks:
       - default
       - proxy-net
