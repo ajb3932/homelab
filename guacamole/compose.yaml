@@ -5,8 +5,8 @@ services:
     hostname: guacamole-guacd
     restart: always
     volumes:
-      - /mnt/nvme/appdata/guacamole/drive:/drive:rw
-      - /mnt/nvme/appdata/guacamole/record:/record:rw
+      - /lab/appdata/guacamole/drive:/drive:rw
+      - /lab/appdata/guacamole/record:/record:rw
   postgres:
     image: postgres:15.2-alpine
     container_name: guacamole-postgress
@@ -18,8 +18,8 @@ services:
       POSTGRES_USER: $POSTGRESQL_USERNAME
     restart: always
     volumes:
-      - /mnt/nvme/appdata/guacamole/init:/docker-entrypoint-initdb.d:z
-      - /mnt/nvme/appdata/guacamole/data:/var/lib/postgresql/data:Z
+      - /lab/appdata/guacamole/init:/docker-entrypoint-initdb.d:z
+      - /lab/appdata/guacamole/data:/var/lib/postgresql/data:Z
   guacamole:
     image: guacamole/guacamole:1.6.0
     container_name: guacamole
@@ -49,7 +49,7 @@ services:
       OPENID_GROUPS_CLAIM_TYPE: $OPENID_GROUPS_CLAIM_TYPE
       EXTENSION_PRIORITY: $EXTENSION_PRIORITY
     volumes:
-      - /mnt/nvme/appdata/guacamole/record:/record:rw
+      - /lab/appdata/guacamole/record:/record:rw
     restart: always
     networks:
       - proxy-net
