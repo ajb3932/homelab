@@ -30,7 +30,7 @@ services:
       - WEBUI_PORT=8080
       - TORRENTING_PORT=6881
     volumes:
-      - /lab/appdata/qbittorrent:/config
+      - /lab/appdata/media/qbittorrent:/config
       - /lab/pool/media:/media
     restart: unless-stopped
   dispatcharr:
@@ -243,14 +243,14 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - DATABASE_USERNAME=${DB_USER}
       - DATABASE_PASSWORD=${DB_PASSWORD}
-      - BOOKLORE_PORT=${BOOKLORE_PORT}
+      - GRIMMORY_PORT=${GRIMMORY_PORT}
     depends_on:
       grimmory-db:
         condition: service_healthy
     volumes:
-      - /lab/appdata/booklore/data:/app/data
+      - /lab/appdata/media/grimmory/data:/app/data
       - /lab/pool/media/books:/books
-      - /lab/appdata/booklore/bookdrop:/bookdrop
+      - /lab/appdata/media/grimmory/bookdrop:/bookdrop
     restart: unless-stopped
     ports:
       - 6060:6060
@@ -270,7 +270,7 @@ services:
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASSWORD}
     volumes:
-      - /lab/appdata/booklore/mariadb:/config
+      - /lab/appdata/media/grimmory/mariadb:/config
     restart: unless-stopped
     healthcheck:
       test:
