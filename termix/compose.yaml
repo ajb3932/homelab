@@ -4,7 +4,7 @@ services:
     container_name: termix
     restart: unless-stopped
     volumes:
-      - /mnt/nvme/appdata/termix:/app/data
+      - /lab/appdata/termix:/app/data
     environment:
       PORT: "8086"
     networks:
