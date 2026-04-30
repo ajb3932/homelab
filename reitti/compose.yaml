@@ -14,7 +14,7 @@ services:
       tile-cache:
         condition: service_healthy
     volumes:
-      - /mnt/nvme/appdata/reitti/reitti-data:/data/
+      - /lab/appdata/reitti/reitti-data:/data/
     environment:
       PHOTON_BASE_URL: http://photon:2322
       POSTGIS_USER: reitti
@@ -30,7 +30,7 @@ services:
       POSTGRES_PASSWORD: reitti
       POSTGRES_DB: reittidb
     volumes:
-      - /mnt/nvme/appdata/reitti/postgis-data:/var/lib/postgresql/data
+      - /lab/appdata/reitti/postgis-data:/var/lib/postgresql/data
     healthcheck:
       test:
         - CMD-SHELL
@@ -45,7 +45,7 @@ services:
       RABBITMQ_DEFAULT_USER: reitti
       RABBITMQ_DEFAULT_PASS: reitti
     volumes:
-      - /mnt/nvme/appdata/reitti/rabbitmq-data:/var/lib/rabbitmq
+      - /lab/appdata/reitti/rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
       test:
         - CMD
@@ -58,7 +58,7 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     volumes:
-      - /mnt/nvme/appdata/reitti/redis-data:/data
+      - /lab/appdata/reitti/redis-data:/data
     healthcheck:
       test:
         - CMD
@@ -74,7 +74,7 @@ services:
       - UPDATE_STRATEGY=PARALLEL
       - REGION=de
     volumes:
-      - /mnt/nvme/appdata/reitti/photon-data:/photon/data
+      - /lab/appdata/reitti/photon-data:/photon/data
   tile-cache:
     image: nginx:alpine
     environment:
