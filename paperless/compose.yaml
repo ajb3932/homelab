@@ -11,7 +11,7 @@ services:
       - PATTERN="scan"_dd-mm-yyyy_hh-MM-ss
       - PGID=1000
       - PUID=1000
-      - PAPERLESS_POST_DOCUMENT_URL=https://docs.piandchips.uk/api/documents/post_document/
+      - PAPERLESS_POST_DOCUMENT_URL=https://docs.${URL}/api/documents/post_document/
       - PAPERLESS_TOKEN=${PAPERLESS_TOKEN}
     volumes:
       - /lab/appdata/paperless/hp-scan:/scan
@@ -33,7 +33,7 @@ services:
       - /lab/appdata/paperless/consume:/usr/src/paperless/consume
     environment:
       PAPERLESS_REDIS: redis://broker:6379
-      PAPERLESS_URL: https://docs.piandchips.uk
+      PAPERLESS_URL: https://docs.${URL}
       PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
       PAPERLESS_SOCIALACCOUNT_PROVIDERS: '{"openid_connect":{"SCOPE":["openid","profile","email"],"OAUTH_PKCE_ENABLED":true,"APPS":[{"provider_id":"authelia","name":"Authelia","client_id":"paperless","secret":"${CLIENT_SECRET}","settings":{"server_url":"https://auth.${URL}","token_auth_method":"client_secret_basic"}}]}}'
     networks:
