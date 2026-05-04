@@ -49,4 +49,4 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - /lab/appdata/Reitti/titlecache:/var/cache/nginx
+      - /lab/appdata/reitti/titlecache:/var/cache/nginx
