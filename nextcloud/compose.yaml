@@ -14,7 +14,7 @@ services:
     environment:
       APACHE_PORT: 11000
       APACHE_ADDITIONAL_NETWORK: proxy-net
-      NEXTCLOUD_DATADIR: /mnt/nvme/nextcloud
+      NEXTCLOUD_DATADIR: /lab/nextcloud
 volumes:
   nextcloud_aio_mastercontainer:
     name: nextcloud_aio_mastercontainer
