@@ -16,7 +16,7 @@ services:
       - SYS_MODULE
     ports:
       - 9696:9696 # Prowlarr
-      - 8080:8080 # qBittorrent
+      - 8081:8081 # qBittorrent
     devices:
       - /dev/net/tun:/dev/net/tun
   qbittorrent:
@@ -27,7 +27,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=${TZ}
-      - WEBUI_PORT=8080
+      - WEBUI_PORT=8081
       - TORRENTING_PORT=6881
     volumes:
       - /lab/appdata/media/qbittorrent:/config
