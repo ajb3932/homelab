@@ -31,7 +31,7 @@ services:
       - TORRENTING_PORT=6881
     volumes:
       - /lab/appdata/media/qbittorrent:/config
-      - /lab/pool/media:/media
+      - /pool/media:/media
     restart: unless-stopped
 #  dispatcharr:
 #    image: ghcr.io/dispatcharr/dispatcharr:latest
@@ -58,7 +58,7 @@ services:
       - NZBGET_PASS=$NZBGET_PASS
     volumes:
       - /lab/appdata/media/nzbget:/config
-      - /lab/pool/media/downloads:/media/downloads
+      - /pool/media/downloads:/media/downloads
     ports:
       - 6789:6789
     restart: unless-stopped
@@ -82,7 +82,7 @@ services:
       - TZ=${TZ}
     volumes:
       - /lab/appdata/media/sonarr:/config
-      - /lab/pool/media:/media
+      - /pool/media:/media
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -95,7 +95,7 @@ services:
 #      - TZ=${TZ}
 #    volumes:
 #      - /lab/appdata/media/sonarr-kids:/config
-#      - /lab/pool/media:/media
+#      - /pool/media:/media
 #    ports:
  #     - 8888:7878
  #   restart: unless-stopped
@@ -108,7 +108,7 @@ services:
       - TZ=${TZ}
     volumes:
       - /lab/appdata/media/radarr:/config
-      - /lab/pool/media:/media
+      - /pool/media:/media
     ports:
       - 7878:7878
     restart: unless-stopped
@@ -121,7 +121,7 @@ services:
  #     - TZ=${TZ}
  #   volumes:
  #     - /lab/appdata/media/radarr-christmas:/config
- #     - /lab/pool/media:/media
+ #     - /pool/media:/media
  #   ports:
  #     - 7676:7878
  #   restart: unless-stopped
@@ -134,7 +134,7 @@ services:
  #     - TZ=${TZ}
  #   volumes:
  #     - /lab/appdata/media/radarr-kids:/config
- #     - /lab/pool/media:/media
+ #     - /pool/media:/media
  #   ports:
  #     - 7575:7878
  #   restart: unless-stopped
@@ -165,8 +165,8 @@ services:
   #    - /lab/appdata/media/tdarr/server:/app/server
   #    - /lab/appdata/media/tdarr/configs:/app/configs
   #    - /lab/appdata/media/tdarr/logs:/app/logs
-  #    - /lab/pool/media/:/media
-  #    - /lab/pool/media/tdarr:/temp
+  #    - /pool/media/:/media
+  #    - /pool/media/tdarr:/temp
   #jellyfin:
   #  image: lscr.io/linuxserver/jellyfin:latest
   #  container_name: jellyfin
@@ -177,7 +177,7 @@ services:
   #    - JELLYFIN_PublishedServerUrl=https://media.piandchips.uk
   #  volumes:
   #    - /lab/appdata/media/jellyfin:/config
-  #    - /lab/pool/media/:/media
+  #    - /pool/media/:/media
   #  ports:
   #    - 7359:7359/udp
 # #     - 1900:1900/udp
@@ -248,7 +248,7 @@ services:
  #       condition: service_healthy
  #   volumes:
  #     - /lab/appdata/media/grimmory/data:/app/data
- #     - /lab/pool/media/books:/books
+ #     - /pool/media/books:/books
  #     - /lab/appdata/media/grimmory/bookdrop:/bookdrop
  #   restart: unless-stopped
  #   ports:
