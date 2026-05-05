@@ -14,6 +14,9 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
+    ports:
+      - 9696:9696 # Prowlarr
+      - 8080:8080 # qBittorrent
     devices:
       - /dev/net/tun:/dev/net/tun
   qbittorrent:
