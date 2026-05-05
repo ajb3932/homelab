@@ -14,7 +14,7 @@ services:
     environment:
       - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=wireguard
-      - WIREGUARD_PRIVATE_KEY=KIbMA5k7M8vnS+B/LK+1pWBsaPlaftxP0PXFjcdQimA=
+      - WIREGUARD_PRIVATE_KEY=${WGKEY}
       - WIREGUARD_ADDRESSES=10.8.0.2/24
       - VPN_ENDPOINT_IP=100.111.63.93
       - VPN_ENDPOINT_PORT=51820
