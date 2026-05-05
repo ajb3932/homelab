@@ -10,7 +10,7 @@ services:
     ports:
       - 9696:9696   # Prowlarr
       - 8081:8081   # qBittorrent
-      - 8888:8888   # Gluetun HTTP proxy
+      - 8888:8000   # Gluetun
     environment:
       - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=wireguard
