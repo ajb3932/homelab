@@ -19,7 +19,6 @@ services:
       - WIREGUARD_ENDPOINT_IP=161.35.143.190
       - WIREGUARD_ENDPOINT_PORT=51820
       - WIREGUARD_PUBLIC_KEY=${WG_SERVER_KEY}
-      - HTTPPROXY=on
     volumes:
       - /lab/appdata/media/gluetun:/gluetun
   qbittorrent:
