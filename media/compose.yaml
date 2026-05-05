@@ -11,9 +11,6 @@ services:
       - TS_EXTRA_ARGS=--exit-node=100.111.63.93 --exit-node-allow-lan-access=true
     volumes:
       - /lab/appdata/media/tailscale:/var/lib/tailscale
-    ports:
-      - "9191:9191" 
-      - "9192:8080"
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -47,21 +44,21 @@ services:
 #      - REDIS_HOST=localhost
 #      - CELERY_BROKER_URL=redis://localhost:6379/0
 #      - DISPATCHARR_LOG_LEVEL=info
-#  nzbget:
-#    image: lscr.io/linuxserver/nzbget:latest
-#    container_name: nzbget
-#    environment:
-#      - PUID=1000
-#      - PGID=1000
-#      - TZ=${TZ}
-#      - NZBGET_USER=$NZBGET_USER
-#      - NZBGET_PASS=$NZBGET_PASS
-#    volumes:
-#      - /lab/appdata/media/nzbget:/config
-#      - /lab/pool/media/downloads:/media/downloads
-#    ports:
-#      - 6789:6789
-#    restart: unless-stopped
+  nzbget:
+    image: lscr.io/linuxserver/nzbget:latest
+    container_name: nzbget
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - NZBGET_USER=$NZBGET_USER
+      - NZBGET_PASS=$NZBGET_PASS
+    volumes:
+      - /lab/appdata/media/nzbget:/config
+      - /lab/pool/media/downloads:/media/downloads
+    ports:
+      - 6789:6789
+    restart: unless-stopped
 #  prowlarr:
 #    image: lscr.io/linuxserver/prowlarr:latest
 #    container_name: prowlarr
