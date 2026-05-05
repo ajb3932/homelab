@@ -14,11 +14,11 @@ services:
     environment:
       - VPN_SERVICE_PROVIDER=custom
       - VPN_TYPE=wireguard
-      - WIREGUARD_PRIVATE_KEY=${WGKEY}
+      - WIREGUARD_PRIVATE_KEY=${WG_CLIENT_KEY}
       - WIREGUARD_ADDRESSES=10.8.0.2/24
-      - VPN_ENDPOINT_IP=100.111.63.93
-      - VPN_ENDPOINT_PORT=51820
-      - WIREGUARD_PUBLIC_KEY=161.35.143.190
+      - WIREGUARD_ENDPOINT_IP=161.35.143.190
+      - WIREGUARD_ENDPOINT_PORT=51820
+      - WIREGUARD_PUBLIC_KEY=${WG_SERVER_KEY}
     volumes:
       - /lab/appdata/media/gluetun:/gluetun
   qbittorrent:
