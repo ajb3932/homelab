@@ -176,48 +176,48 @@ services:
   #    - /lab/appdata/media/tdarr/logs:/app/logs
   #    - /pool/media/:/media
   #    - /pool/media/tdarr:/temp
-  #jellyfin:
-  #  image: lscr.io/linuxserver/jellyfin:latest
-  #  container_name: jellyfin
-  #  environment:
-  #    - PUID=1000
-  #    - PGID=1000
-  #    - TZ=${TZ}
-  #    - JELLYFIN_PublishedServerUrl=https://media.piandchips.uk
-  #  volumes:
-  #    - /lab/appdata/media/jellyfin:/config
-  #    - /pool/media/:/media
-  #  ports:
-  #    - 7359:7359/udp
-# #     - 1900:1900/udp
-   # devices:
-   #   - /dev/dri:/dev/dri
-    #group_add:
- #     - "18"
- #   restart: unless-stopped
- #   networks:
- #     - proxy-net
- #     - default
- # seerr:
- #   image: ghcr.io/seerr-team/seerr:latest
- #   init: true
- #   container_name: seerr
- #   environment:
- #     - LOG_LEVEL=info
- #     - TZ=${TZ}
- #   volumes:
- #     - /lab/appdata/media/jellyseer:/app/config
- #   healthcheck:
- #     test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status
- #       || exit 1
- #     start_period: 20s
- #     timeout: 3s
- #     interval: 15s
- #     retries: 3
- #   restart: unless-stopped
- #   networks:
- #     - proxy-net
- #     - default
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin:latest
+    container_name: jellyfin
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - JELLYFIN_PublishedServerUrl=https://media.piandchips.uk
+    volumes:
+      - /lab/appdata/media/jellyfin:/config
+      - /pool/media/:/media
+    ports:
+      - 7359:7359/udp
+#     - 1900:1900/udp
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "18"
+    restart: unless-stopped
+    networks:
+      - proxy-net
+      - default
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=${TZ}
+    volumes:
+      - /lab/appdata/media/jellyseer:/app/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status
+        || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - proxy-net
+      - default
   #flaresolverr:
  #   image: ghcr.io/flaresolverr/flaresolverr:latest
  #   container_name: flaresolverr
@@ -241,58 +241,58 @@ services:
  #     timeout: 10s
  #     start_period: 30s
  #     retries: 3
- # grimmory:
- #   image: grimmory/grimmory:latest
- #   container_name: grimmory
- #   environment:
- #     - APP_USER_ID=${APP_USER_ID}
- #     - APP_GROUP_ID=${APP_GROUP_ID}
- #     - TZ=${TZ}
- #     - DATABASE_URL=${DATABASE_URL}
- #     - DATABASE_USERNAME=${DB_USER}
- #     - DATABASE_PASSWORD=${DB_PASSWORD}
- #     - GRIMMORY_PORT=${GRIMMORY_PORT}
- #   depends_on:
- #     grimmory-db:
- #       condition: service_healthy
- #   volumes:
- #     - /lab/appdata/media/grimmory/data:/app/data
- #     - /pool/media/books:/books
- #     - /lab/appdata/media/grimmory/bookdrop:/bookdrop
- #   restart: unless-stopped
- #   ports:
-  #    - 6060:6060
- #   networks:
-  #    - proxy-net
-  #    - default
-  #grimmory-db:
-  #  image: lscr.io/linuxserver/mariadb:11.4.5
-  #  container_name: grimmory-db
-  #  hostname: grimmory-db
-  #  environment:
-  #    - PUID=${DB_USER_ID}
-  #    - PGID=${DB_GROUP_ID}
-  #    - TZ=${TZ}
-  #    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-  #    - MYSQL_DATABASE=${MYSQL_DATABASE}
-  #    - MYSQL_USER=${DB_USER}
-  #    - MYSQL_PASSWORD=${DB_PASSWORD}
-  #  volumes:
-  #    - /lab/appdata/media/grimmory/mariadb:/config
-  #  restart: unless-stopped
-  #  healthcheck:
-  #    test:
-  #      - CMD
-  #      - mariadb-admin
-  #      - ping
-  #      - -h
-  #      - localhost
-  #    interval: 5s
-  #    timeout: 5s
-  #    retries: 10
-  #  networks:
-  #    - db_network
-  #    - default
+  grimmory:
+    image: grimmory/grimmory:latest
+    container_name: grimmory
+    environment:
+      - APP_USER_ID=${APP_USER_ID}
+      - APP_GROUP_ID=${APP_GROUP_ID}
+      - TZ=${TZ}
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_USERNAME=${DB_USER}
+      - DATABASE_PASSWORD=${DB_PASSWORD}
+      - GRIMMORY_PORT=${GRIMMORY_PORT}
+    depends_on:
+      grimmory-db:
+        condition: service_healthy
+    volumes:
+      - /lab/appdata/media/grimmory/data:/app/data
+      - /pool/media/books:/books
+      - /lab/appdata/media/grimmory/bookdrop:/bookdrop
+    restart: unless-stopped
+    ports:
+      - 6060:6060
+    networks:
+      - proxy-net
+      - default
+  grimmory-db:
+    image: lscr.io/linuxserver/mariadb:11.4.5
+    container_name: grimmory-db
+    hostname: grimmory-db
+    environment:
+      - PUID=${DB_USER_ID}
+      - PGID=${DB_GROUP_ID}
+      - TZ=${TZ}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - /lab/appdata/media/grimmory/mariadb:/config
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - mariadb-admin
+        - ping
+        - -h
+        - localhost
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - db_network
+      - default
 networks:
   default:
     driver: bridge
