@@ -123,19 +123,19 @@ services:
     ports:
       - 7878:7878
     restart: unless-stopped
- # radarr-christmas:
- #   image: lscr.io/linuxserver/radarr:latest
- #   container_name: radarr-christmas
- #   environment:
- #     - PUID=1000
- #     - PGID=1000
- #     - TZ=${TZ}
- #   volumes:
- #     - /lab/appdata/media/radarr-christmas:/config
- #     - /pool/media:/media
- #   ports:
- #     - 7676:7878
- #   restart: unless-stopped
+  radarr-christmas:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr-christmas
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - /lab/appdata/media/radarr-christmas:/config
+      - /pool/media:/media
+    ports:
+      - 7676:7878
+    restart: unless-stopped
  # radarr-kids:
  #   image: lscr.io/linuxserver/radarr:latest
  #   container_name: radarr-kids
