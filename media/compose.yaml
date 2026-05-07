@@ -108,7 +108,7 @@ services:
       - /lab/appdata/media/sonarr-kids:/config
       - /pool/media:/media
     ports:
-      - 8888:7878
+      - 8888:8888
     restart: unless-stopped
   radarr:
     image: lscr.io/linuxserver/radarr:latest
@@ -147,7 +147,7 @@ services:
       - /lab/appdata/media/radarr-kids:/config
       - /pool/media:/media
     ports:
-      - 7575:7878
+      - 7575:7575
     restart: unless-stopped
  # tdarr:
  #   container_name: tdarr
