@@ -4,7 +4,7 @@ services:
     container_name: mealie
     restart: always
     volumes:
-      - /mnt/nvme/appdata/mealie/data:/app/data/
+      - /lab/appdata/mealie/data:/app/data/
     environment:
       ALLOW_SIGNUP: "false"
       PUID: 1000
