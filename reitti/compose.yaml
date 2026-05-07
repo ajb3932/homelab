@@ -18,6 +18,8 @@ services:
       POSTGIS_PASSWORD: reitti
       POSTGIS_DB: reittidb
       POSTGIS_HOST: postgis
+    networks:
+      - default
   postgis:
     image: postgis/postgis:17-3.5-alpine
     environment:
@@ -31,6 +33,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - default
+      - db_network
   redis:
     image: redis:7-alpine
     volumes:
@@ -50,3 +55,11 @@ services:
       retries: 5
     volumes:
       - /lab/appdata/reitti/titlecache:/var/cache/nginx
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
+  db_network:
+    external: true
