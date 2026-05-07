@@ -97,19 +97,19 @@ services:
     ports:
       - 8989:8989
     restart: unless-stopped
-#  sonarr-kids:
-#    image: lscr.io/linuxserver/sonarr:latest
-#    container_name: sonarr-kids
-#    environment:
-#      - PUID=1000
-#      - PGID=1000
-#      - TZ=${TZ}
-#    volumes:
-#      - /lab/appdata/media/sonarr-kids:/config
-#      - /pool/media:/media
-#    ports:
- #     - 8888:7878
- #   restart: unless-stopped
+  sonarr-kids:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr-kids
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - /lab/appdata/media/sonarr-kids:/config
+      - /pool/media:/media
+    ports:
+      - 8888:7878
+    restart: unless-stopped
   radarr:
     image: lscr.io/linuxserver/radarr:latest
     container_name: radarr
@@ -136,19 +136,19 @@ services:
     ports:
       - 7676:7676
     restart: unless-stopped
- # radarr-kids:
- #   image: lscr.io/linuxserver/radarr:latest
- #   container_name: radarr-kids
- #   environment:
- #     - PUID=1000
- #     - PGID=1000
- #     - TZ=${TZ}
- #   volumes:
- #     - /lab/appdata/media/radarr-kids:/config
- #     - /pool/media:/media
- #   ports:
- #     - 7575:7878
- #   restart: unless-stopped
+  radarr-kids:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr-kids
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - /lab/appdata/media/radarr-kids:/config
+      - /pool/media:/media
+    ports:
+      - 7575:7878
+    restart: unless-stopped
  # tdarr:
  #   container_name: tdarr
  #   image: ghcr.io/haveagitgat/tdarr:latest
