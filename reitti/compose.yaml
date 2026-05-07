@@ -1,6 +1,7 @@
 services:
   reitti:
     image: dedicatedcode/reitti:latest
+    container_name: reitti
     ports:
       - 8088:8080
     depends_on:
@@ -22,6 +23,7 @@ services:
       - default
   postgis:
     image: postgis/postgis:17-3.5-alpine
+    container_name: reitti-db
     environment:
       POSTGRES_USER: reitti
       POSTGRES_PASSWORD: reitti
@@ -38,6 +40,7 @@ services:
       - db_network
   redis:
     image: redis:7-alpine
+    container_name: reitti-redis
     volumes:
       - /lab/appdata/reitti/redis:/data
     healthcheck:
@@ -49,6 +52,7 @@ services:
       - default
   tile-cache:
     image: dedicatedcode/reitti-tile-cache:latest
+    container_name: reitti-tc
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/osm/0/0/0.png"]
