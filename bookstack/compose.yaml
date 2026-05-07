@@ -12,7 +12,7 @@ services:
       - MYSQL_USER=$MYSQL_USER
       - MYSQL_PASSWORD=$MYSQL_PASSWORD
     volumes:
-      - /mnt/nvme/appdata/bookstack/db:/config
+      - /lab/appdata/bookstack/db:/config
     restart: unless-stopped
     labels:
       - diun.enable=false
@@ -52,7 +52,7 @@ services:
       - OIDC_DISPLAY_NAME_CLAIMS=${OIDC_DISPLAY_NAME_CLAIMS}
       - OIDC_END_SESSION_ENDPOINT=${OIDC_END_SESSION_ENDPOINT}
     volumes:
-      - /mnt/nvme/appdata/bookstack/config:/config
+      - /lab/appdata/bookstack/config:/config
     restart: unless-stopped
     networks:
       - proxy-net
