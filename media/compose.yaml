@@ -108,7 +108,7 @@ services:
       - /lab/appdata/media/sonarr-kids:/config
       - /pool/media:/media
     ports:
-      - 8787:8888
+      - 8787:8787
     restart: unless-stopped
   radarr:
     image: lscr.io/linuxserver/radarr:latest
