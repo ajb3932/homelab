@@ -134,7 +134,7 @@ services:
       - /lab/appdata/media/radarr-christmas:/config
       - /pool/media:/media
     ports:
-      - 7676:7878
+      - 7676:7676
     restart: unless-stopped
  # radarr-kids:
  #   image: lscr.io/linuxserver/radarr:latest
