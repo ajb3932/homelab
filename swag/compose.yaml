@@ -12,11 +12,11 @@ services:
       URL: ${URL}
       SUBDOMAINS: wildcard
       VALIDATION: dns
-      #CERTPROVIDER: letsencrypt
-      CERTPROVIDER: zerossl
+      CERTPROVIDER: letsencrypt
+      #CERTPROVIDER: zerossl
       DNSPLUGIN: cloudflare
       EMAIL: ${EMAIL}
-      STAGING: "true"
+      #STAGING: "true"
       SWAG_AUTORELOAD: "true"
       DOCKER_MODS: linuxserver/mods:swag-dashboard
     volumes:
