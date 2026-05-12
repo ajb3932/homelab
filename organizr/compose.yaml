@@ -1,0 +1,14 @@
+services:
+    organizr:
+        container_name: organizr
+        hostname: organizr
+        image: organizr/organizr:latest
+        restart: unless-stopped
+        ports:
+            - 8003:80
+        volumes:
+            - /lab/appdata/organizr:/config
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Europe/London
