@@ -71,6 +71,14 @@ services:
       - S3_ENDPOINT=http://seaweedfs:8333
       - S3_BUCKET=reactive-resume
       - S3_FORCE_PATH_STYLE=true
+      - OAUTH_CLIENT_ID=${OAUTH_CLIENT_ID}
+      - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
+      - OAUTH_AUTHORIZATION_URL=${OAUTH_AUTHORIZATION_URL}
+      - OAUTH_TOKEN_URL=${OAUTH_TOKEN_URL}
+      - OAUTH_USERINFO_URL=${OAUTH_USERINFO_URL}
+      - OAUTH_CALLBACK_URL=${OAUTH_CALLBACK_URL}
+      - OAUTH_SCOPES=openid profile email
+      - OAUTH_NAME=Authelia
     volumes:
       - /lab/appdata/reactive_resume/app:/app/data
     depends_on:
