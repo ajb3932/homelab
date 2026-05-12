@@ -75,8 +75,8 @@ services:
       - OAUTH_CLIENT_SECRET=${OAUTH_CLIENT_SECRET}
       - OAUTH_DISCOVERY_URL=${OAUTH_DISCOVERY_URL}
       - OAUTH_PROVIDER_NAME=${OAUTH_PROVIDER_NAME}
-      - FLAG_DISABLE_SIGNUPS=true
-      - FLAG_DISABLE_EMAIL_AUTH=true
+      - FLAG_DISABLE_SIGNUPS="true"
+      - FLAG_DISABLE_EMAIL_AUTH="true"
     volumes:
       - /lab/appdata/reactive_resume/app:/app/data
     depends_on:
