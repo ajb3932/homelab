@@ -58,9 +58,7 @@ services:
         condition: service_healthy
 
   reactive_resume:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: amruthpillai/reactive-resume:latest
     networks:
       - data_network
       - storage_network
