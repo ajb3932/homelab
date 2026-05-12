@@ -5,7 +5,7 @@ services:
     image: postgres:latest
     restart: unless-stopped
     networks:
-      - data_network
+      - default
     environment:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
@@ -26,7 +26,7 @@ services:
     restart: unless-stopped
     command: server -s3 -filer -dir=/data -ip=0.0.0.0
     networks:
-      - storage_network
+      - default
     environment:
       - AWS_ACCESS_KEY_ID=seaweedfs
       - AWS_SECRET_ACCESS_KEY=seaweedfs
@@ -52,7 +52,7 @@ services:
         exit 0;
       "
     networks:
-      - storage_network
+      - default
     depends_on:
       seaweedfs:
         condition: service_healthy
@@ -60,12 +60,12 @@ services:
   reactive_resume:
     image: amruthpillai/reactive-resume:latest
     networks:
-      - data_network
-      - storage_network
+      - default
+      - proxy-net
     ports:
       - "3000:3000"
     environment:
-      - APP_URL=http://localhost:3000
+      - APP_URL=https://cv.piandchips.uk
       - DATABASE_URL=postgresql://postgres:${PGPW}@postgres:5432/postgres
       - AUTH_SECRET=${AUTH_SECRET}
       - S3_ACCESS_KEY_ID=seaweedfs
@@ -88,5 +88,7 @@ services:
       retries: 3
 
 networks:
-  data_network:
-  storage_network:
+  default:
+    driver: bridge
+  proxy-net:
+    external: true
