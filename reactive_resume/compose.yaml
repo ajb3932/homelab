@@ -2,6 +2,7 @@ name: reactive_resume
 
 services:
   postgres:
+    container_name: rx-resume-db
     image: postgres:latest
     restart: unless-stopped
     networks:
@@ -10,8 +11,6 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${PGPW}
-    ports:
-      - "5432:5432"
     volumes:
       - /lab/appdata/reactive_resume/db:/var/lib/postgresql
     healthcheck:
@@ -23,6 +22,7 @@ services:
 
   seaweedfs:
     image: chrislusf/seaweedfs:latest
+    container_name: rx-resume-s3
     restart: unless-stopped
     command: server -s3 -filer -dir=/data -ip=0.0.0.0
     networks:
@@ -30,8 +30,6 @@ services:
     environment:
       - AWS_ACCESS_KEY_ID=seaweedfs
       - AWS_SECRET_ACCESS_KEY=seaweedfs
-    ports:
-      - "8333:8333"
     volumes:
       - /lab/appdata/reactive_resume/seaweed:/data
     healthcheck:
@@ -42,6 +40,7 @@ services:
       retries: 3
 
   seaweedfs_create_bucket:
+    container_name: rx-resume-cb
     image: quay.io/minio/mc:latest
     restart: on-failure
     entrypoint: >
@@ -58,12 +57,11 @@ services:
         condition: service_healthy
 
   reactive_resume:
+    container_name: rx-resume
     image: amruthpillai/reactive-resume:latest
     networks:
       - default
       - proxy-net
-    ports:
-      - "3000:3000"
     environment:
       - APP_URL=https://cv.piandchips.uk
       - DATABASE_URL=postgresql://postgres:${PGPW}@postgres:5432/postgres
