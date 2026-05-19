@@ -18,7 +18,7 @@ services:
       EMAIL: ${EMAIL}
       #STAGING: "true"
       SWAG_AUTORELOAD: "true"
-      DOCKER_MODS: linuxserver/mods:swag-dashboard
+      DOCKER_MODS: linuxserver/mods:swag-dashboard|ghcr.io/themepark-dev/theme.park:swag
     volumes:
       - /lab/appdata/swag/:/config
       - /lab/appdata/modmanager:/modcache
