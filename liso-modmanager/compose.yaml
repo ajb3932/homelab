@@ -3,7 +3,7 @@ services:
     image: lscr.io/linuxserver/modmanager:latest
     container_name: modmanager
     environment:
-      - DOCKER_MODS=linuxserver/mods:swag-dashboard|linuxserver/mods:universal-docker|ghcr.io/themepark-dev/theme.park:swag
+      - DOCKER_MODS=linuxserver/mods:swag-dashboard|linuxserver/mods:universal-docker
     volumes:
       - ${DIR}:/modcache
       - /var/run/docker.sock:/var/run/docker.sock:ro
