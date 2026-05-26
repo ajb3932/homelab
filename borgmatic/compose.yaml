@@ -13,12 +13,13 @@ services:
       - /lab/immich/:/src/photos
       - /lab/archive/nextcloud:/src/nextcloud
       - /lab/data/:/src/data
+    restart: "no"
     environment:
       - TZ=Europe/London
       - BORG_PASSPHRASE=${BORG_PASSPHRASE}
+      - BACKUP_CRON=* * 31 2 *   # Impossible date — effectively disables it
     networks:
       - db_network
-    restart: unless-stopped
 networks:
   db_network:
     external: true
