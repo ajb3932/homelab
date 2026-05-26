@@ -8,6 +8,7 @@ services:
       - /lab/appdata/borgmatic/.config:/etc/borgmatic.d/
       - /lab/appdata/borgmatic/borg_keys:/root/.config/borg
       - /lab/appdata/borgmatic/.ssh:/root/.ssh
+      - /var/run/docker.sock:/var/run/docker.sock
       # Source Dirs
       - /lab/appdata:/src/appdata
       - /lab/immich/:/src/photos
@@ -15,6 +16,7 @@ services:
       - /lab/data/:/src/data
     restart: "no"
     environment:
+      - DOCKERCLI=true
       - TZ=Europe/London
       - BORG_PASSPHRASE=${BORG_PASSPHRASE}
       - BACKUP_CRON=* * 31 2 *   # Impossible date — effectively disables it
