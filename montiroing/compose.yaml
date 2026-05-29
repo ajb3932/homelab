@@ -1,0 +1,140 @@
+services:
+
+  # ============================================================
+  # Prometheus — metrics scraper
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    user: "1000:1000"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/data"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - /lab/appdata/prometheus:/etc/prometheus
+      - /lab/monitoring/prometheus:/data
+    networks:
+      - monitoring
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.piandchips.uk`)"
+      - "traefik.http.routers.prometheus.entrypoints=https"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.routers.prometheus.middlewares=authelia@docker"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+
+  # ============================================================
+  # Grafana — dashboards & alerting
+  # ============================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    user: "1000:1000"
+    environment:
+      - GF_SERVER_ROOT_URL=https://grafana.piandchips.uk
+      #- GF_AUTH_GENERIC_OAUTH_ENABLED=true
+      #- GF_AUTH_GENERIC_OAUTH_NAME=Authelia
+      #- GF_AUTH_GENERIC_OAUTH_CLIENT_ID=grafana
+      #- GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=${CLIENT_SECRET}         # set in Authelia OIDC clients
+      #- GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email groups
+      #- GF_AUTH_GENERIC_OAUTH_AUTH_URL=https://auth.piandchips.uk/api/oidc/authorization
+      #- GF_AUTH_GENERIC_OAUTH_TOKEN_URL=https://auth.piandchips.uk/api/oidc/token
+      #- GF_AUTH_GENERIC_OAUTH_API_URL=https://auth.piandchips.uk/api/oidc/userinfo
+      #- GF_AUTH_GENERIC_OAUTH_USE_PKCE=true
+      #- GF_AUTH_SIGNOUT_REDIRECT_URL=https://auth.piandchips.uk/logout
+      #- GF_AUTH_OAUTH_AUTO_LOGIN=true
+      - GF_SECURITY_ADMIN_USER=alex
+      - GF_SECURITY_ADMIN_PASSWORD=${PW}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - /lab/appdata/grafana:/etc/grafana/provisioning
+      - /lab/monitoring/grafana:/var/lib/grafana
+    networks:
+      - monitoring
+      - proxy-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.piandchips.uk`)"
+      - "traefik.http.routers.grafana.entrypoints=https"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  # ============================================================
+  # Node Exporter — host metrics (CPU, RAM, network, disk, temps)
+  # ============================================================
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+      - "--collector.hwmon"           # drive & CPU temps via lm-sensors/hwmon
+      - "--collector.zfs"             # ZFS pool stats
+      - "--collector.systemd"         # systemd service states
+      - "--collector.processes"
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - monitoring
+
+  # ============================================================
+  # cAdvisor — Docker container metrics
+  # ============================================================
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /lab/docker:/var/lib/docker:ro   # your docker data-root
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - monitoring
+
+  # ============================================================
+  # Smartctl Exporter — per-drive SMART data & temperatures
+  # ============================================================
+  smartctl-exporter:
+    image: prometheuscommunity/smartctl-exporter:latest
+    container_name: smartctl-exporter
+    restart: unless-stopped
+    privileged: true
+    user: root
+    volumes:
+      - /dev:/dev:ro
+    networks:
+      - monitoring
+
+  # ============================================================
+  # ZFS Exporter — detailed pool health, space, I/O
+  # ============================================================
+  zfs-exporter:
+    image: pdf/zfs-exporter:latest
+    container_name: zfs-exporter
+    restart: unless-stopped
+    privileged: true
+    command:
+      - "--web.listen-address=:9134"
+    volumes:
+      - /proc:/proc:ro
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    name: monitoring
+    driver: bridge
+  proxy-net:
+    external: true
