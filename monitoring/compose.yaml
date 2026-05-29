@@ -54,6 +54,8 @@ services:
     volumes:
       - /lab/appdata/grafana:/etc/grafana/provisioning
       - /lab/monitoring/grafana:/var/lib/grafana
+    ports:
+      - "3000:3000"
     networks:
       - monitoring
       - proxy-net
