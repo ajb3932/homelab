@@ -121,14 +121,10 @@ services:
   # ZFS Exporter — detailed pool health, space, I/O
   # ============================================================
   zfs-exporter:
-    image: pdf/zfs-exporter:latest
+    image: matusnovak/prometheus-zfs:latest
     container_name: zfs-exporter
     restart: unless-stopped
     privileged: true
-    command:
-      - "--web.listen-address=:9134"
-    volumes:
-      - /proc:/proc:ro
     networks:
       - monitoring
 
