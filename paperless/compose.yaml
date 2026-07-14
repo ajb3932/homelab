@@ -5,7 +5,7 @@ services:
     hostname: hp-scan
     container_name: hp-scan
     environment:
-      - IP=10.0.0.3
+      - IP=${PRINTER}
       - LABEL=Paperless
       - TZ=Europe/London
       - PATTERN="scan"_dd-mm-yyyy_hh-MM-ss
