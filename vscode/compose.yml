@@ -1,0 +1,17 @@
+services:
+  vscode:
+    image: lscr.io/linuxserver/vscode:latest
+    container_name: vscode
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - /lab/appdata/vscode:/config
+    ports:
+      - 3000:3000
+      - 3001:3001
+    shm_size: "1gb"
+    restart: unless-stopped
