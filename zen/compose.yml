@@ -8,8 +8,9 @@ services:
       - TZ=Etc/UTC
     volumes:
       - /lab/appdata/zen:/config
-    ports:
-      - 3200:3000
-      - 3201:3001
     shm_size: "1gb"
     restart: unless-stopped
+networks:
+  default:
+    name: proxy-net
+    external: true
