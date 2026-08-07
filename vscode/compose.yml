@@ -12,7 +12,5 @@ services:
       - /lab/appdata/vscode:/config
     shm_size: "1gb"
     restart: unless-stopped
-networks:
-  default:
-    name: proxy-net
-    external: true
+    ports:
+      - 3056:3000
