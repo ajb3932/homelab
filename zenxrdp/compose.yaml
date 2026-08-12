@@ -1,0 +1,11 @@
+services:
+  zen:
+    image: ajb3932/zenxrdp:latest
+    ports:
+      - "3390:3389"
+    environment:
+      - RDP_PASSWORD=changeme
+    volumes:
+      - /zen/data:/home/rdpuser/.zen
+      - /zen/downloads:/home/rdpuser/Downloads
+    restart: unless-stopped
