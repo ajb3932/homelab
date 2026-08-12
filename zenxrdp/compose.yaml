@@ -1,11 +1,13 @@
 services:
   zen:
+    hostname: zenxrdp
+    container_name: zenxrdp
     image: ajb3932/zenxrdp:latest
     ports:
       - "3390:3389"
     environment:
-      - RDP_PASSWORD=changeme
+      - RDP_PASSWORD=${RDP_PW}
     volumes:
-      - /zen/data:/home/rdpuser/.zen
-      - /zen/downloads:/home/rdpuser/Downloads
+      - /lab/appdata/zenxrdp/data:/home/rdpuser/.zen
+      - /lab/appdata/zenxrdp/downloads:/home/rdpuser/Downloads
     restart: unless-stopped
