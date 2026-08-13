@@ -6,7 +6,7 @@ services:
     environment:
       - RDP_PASSWORD=${RDP_PW}
     volumes:
-      - ./workdir:/workspace
-      - /vscode/config:/home/rdpuser/.config/Code
-      - /vscode/extensions:/home/rdpuser/.vscode
+      - /lab/appdata/vscodexrdp/workspace:/workspace
+      - /lab/appdata/vscodexrdp/config:/home/rdpuser/.config/Code
+      - /lab/appdata/vscodexrdp/extensions:/home/rdpuser/.vscode
     restart: unless-stopped
