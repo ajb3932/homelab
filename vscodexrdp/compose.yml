@@ -12,4 +12,5 @@ services:
       - /lab/appdata/vscodexrdp/workspace:/workspace
       - /lab/appdata/vscodexrdp/config:/home/rdpuser/.config/Code
       - /lab/appdata/vscodexrdp/extensions:/home/rdpuser/.vscode
+      - /lab/appdata/vscodexrdp/ssh:/home/rdpuser/.ssh
     restart: unless-stopped
