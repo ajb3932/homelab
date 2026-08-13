@@ -1,0 +1,12 @@
+services:
+  vscodexrdp:
+    image: ajb3932/vscodexrdp:latest
+    ports:
+      - "3391:3389"
+    environment:
+      - RDP_PASSWORD=${RDP_PW}
+    volumes:
+      - ./workdir:/workspace
+      - /vscode/config:/home/rdpuser/.config/Code
+      - /vscode/extensions:/home/rdpuser/.vscode
+    restart: unless-stopped
