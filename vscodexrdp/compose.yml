@@ -1,10 +1,13 @@
 services:
   vscodexrdp:
     image: ajb3932/vscodexrdp:latest
+    hostname: vscodexrdp
+    container_name: vscodexrdp
     ports:
       - "3391:3389"
     environment:
       - RDP_PASSWORD=${RDP_PW}
+      - ADDITIONAL_PACKAGES=openssh-client
     volumes:
       - /lab/appdata/vscodexrdp/workspace:/workspace
       - /lab/appdata/vscodexrdp/config:/home/rdpuser/.config/Code
