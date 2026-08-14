@@ -7,7 +7,7 @@ services:
       - "3392:3389"
     environment:
       - RDP_PASSWORD=${RDP_PW}
-      - ADDITIONAL_PACKAGES=openssh-client,flameshot
+      - ADDITIONAL_PACKAGES=openssh-client,flameshot,gh
     volumes:
       - /lab/appdata/mydevbox:/home/rdpuser
     shm_size: '1gb'
