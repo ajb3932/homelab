@@ -8,6 +8,7 @@ services:
     environment:
       - RDP_PASSWORD=${RDP_PW}
       - ADDITIONAL_PACKAGES=openssh-client
+      - TZ=Europe/London
     volumes:
       - /lab/appdata/mydevbox:/home/rdpuser
     shm_size: '1gb'
