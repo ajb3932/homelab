@@ -190,8 +190,8 @@ services:
     ports:
       - 7359:7359/udp
 #     - 1900:1900/udp
-    devices:
-      - /dev/dri:/dev/dri
+    #devices:
+   #   - /dev/dri:/dev/dri
     group_add:
       - "18"
     restart: unless-stopped
