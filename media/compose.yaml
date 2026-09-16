@@ -293,6 +293,37 @@ services:
     networks:
       - db_network
       - default
+  music-grabber:
+    image: g33kphr33k/musicgrabber:latest
+    container_name: music-grabber
+    restart: unless-stopped
+    # Required for Spotify playlists over 100 tracks (headless browser)
+    shm_size: '2gb'
+    ports:
+      - "3824:8080"
+    volumes:
+      - /pool/media/music:/music
+      - /lab/appdata/media/mgrbr:/data
+    environment:
+      - MUSIC_DIR=/music
+      - DB_PATH=/data/music_grabber.db
+      - ENABLE_MUSICBRAINZ=true
+      - PUID=1000
+      - PGID=1000
+      # Optional: Navidrome auto-rescan
+      # - NAVIDROME_URL=http://navidrome:4533
+      # - NAVIDROME_USER=admin
+      # - NAVIDROME_PASS=yourpassword
+      - JELLYFIN_URL=${JELLYFIN_URL}
+      - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
+      
+      - NOTIFY_ON=playlists,bulk,errors
+      
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_TO=${SMTP_TO}
 networks:
   default:
     driver: bridge
