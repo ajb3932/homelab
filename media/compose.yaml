@@ -335,7 +335,6 @@ services:
       - ND_PLAYLISTSPATH=playlists
     volumes:
       - /pool/media/music:/music:ro
-      - /lab/appdata/media/navidrome/playlists:/music/playlists:ro
       - /lab/appdata/media/navidrome:/data
     networks:
       - proxy-net
