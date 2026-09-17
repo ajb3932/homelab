@@ -332,11 +332,11 @@ services:
       - "4533:4533"
     restart: unless-stopped
     environment:
-      - ND_PLAYLISTSPATH=/playlists
+      - ND_PLAYLISTSPATH=playlists
     volumes:
-      - /lab/appdata/media/navidrome/playlists:/playlists
-      - "/lab/appdata/media/navidrome:/data"
-      - "/pool/media/music:/music:ro"
+      - /pool/media/music:/music:ro
+      - /lab/appdata/media/navidrome/playlists:/music/playlists:ro
+      - /lab/appdata/media/navidrome:/data
 networks:
   default:
     driver: bridge
