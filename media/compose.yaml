@@ -316,14 +316,6 @@ services:
       # - NAVIDROME_PASS=yourpassword
       - JELLYFIN_URL=${JELLYFIN_URL}
       - JELLYFIN_API_KEY=${JELLYFIN_API_KEY}
-      
-      - NOTIFY_ON=playlists,bulk,errors
-      
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_TO=${SMTP_TO}
   navidrome:
     container_name: navidrome
     image: deluan/navidrome:latest
