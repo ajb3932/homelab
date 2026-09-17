@@ -331,10 +331,10 @@ services:
     ports:
       - "4533:4533"
     restart: unless-stopped
-    volumes:
-      - /lab/appdata/media/navidrome/playlists:/playlists
     environment:
       - ND_PLAYLISTSPATH=/playlists
+    volumes:
+      - /lab/appdata/media/navidrome/playlists:/playlists
       - "/lab/appdata/media/navidrome:/data"
       - "/pool/media/music:/music:ro"
 networks:
