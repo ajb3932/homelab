@@ -325,6 +325,7 @@ services:
       - SMTP_PASS=${SMTP_PASS}
       - SMTP_TO=${SMTP_TO}
   navidrome:
+    container_name: navidrome
     image: deluan/navidrome:latest
     user: 1000:1000 # must own the data folder and be able to read music folder(s). See Permissions below
     ports:
