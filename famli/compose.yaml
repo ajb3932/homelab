@@ -1,0 +1,24 @@
+services:
+  famli:
+    image: ajb3932/famli:latest
+    # Or build from this checkout:
+    # build: .
+    container_name: famli
+    user: "1000:1000"
+    ports:
+      - "9992:9992"
+    volumes:
+      - /lab/appdata/famli:/app/data
+    environment:
+      - PORT=9992
+      # Behind a reverse proxy (nginx, Traefik, Caddy...)? Uncomment:
+      # - TRUST_PROXY=1
+    # Hardening: the app only ever writes to /app/data.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
