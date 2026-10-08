@@ -147,6 +147,19 @@ services:
     ports:
       - 7575:7575
     restart: unless-stopped
+  sportarr:
+    image: sportarr/sportarr:latest
+    container_name: sportarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    volumes:
+      - /lab/appdata/media/sportarr:/config
+      - /pool/media:/media
+    ports:
+      - 1867:1867
+    restart: unless-stopped
  # tdarr:
  #   container_name: tdarr
  #   image: ghcr.io/haveagitgat/tdarr:latest
