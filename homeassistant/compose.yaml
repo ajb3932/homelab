@@ -11,3 +11,13 @@ services:
     network_mode: host
     environment:
       TZ: Europe/London
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - /lab/appdata/mosquitto/config:/mosquitto/config
+      - /lab/appdata/mosquitto/data:/mosquitto/data
+      - /lab/appdata/mosquitto/log:/mosquitto/log
