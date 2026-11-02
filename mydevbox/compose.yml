@@ -12,4 +12,5 @@ services:
     volumes:
       - /lab/appdata/mydevbox:/home/rdpuser
     shm_size: '1gb'
+    mem_limit: 12g
     restart: unless-stopped
