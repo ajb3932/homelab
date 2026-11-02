@@ -13,6 +13,7 @@ services:
       - PUID=1000
       - PAPERLESS_POST_DOCUMENT_URL=https://docs.${URL}/api/documents/post_document/
       - PAPERLESS_TOKEN=${PAPERLESS_TOKEN}
+      - PAPERLESS_SECRET_KEY=${PAPERLESS_SECRET_KEY}
     volumes:
       - /lab/appdata/paperless/hp-scan:/scan
   broker:
