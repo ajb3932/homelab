@@ -14,6 +14,7 @@ services:
       - /lab/immich/:/src/photos
       - /lab/archive/nextcloud:/src/nextcloud
       - /lab/data/:/src/data
+      - /lab/scripts:/src/lab-extra/scripts
     restart: "no"
     environment:
       - DOCKERCLI=true
