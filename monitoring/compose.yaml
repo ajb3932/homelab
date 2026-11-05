@@ -1,0 +1,854 @@
+# Monitoring: Alloy collects logs (containers + host journal/kernel) and metrics
+# (host RAM/swap/PSI, per-container, per-process) -> Loki (logs) + Prometheus (metrics) -> Grafana.
+# Grafana: http://homelab:3000  (admin password = GF_ADMIN_PASSWORD stack variable in Portainer)
+# Configs are inlined below (compose `configs: content:`) because Portainer git stacks
+# can't reliably bind-mount files from the repo. Literal $ is written as $$.
+services:
+  loki:
+    image: grafana/loki:3.7.9
+    container_name: loki
+    user: "1000:1000"
+    command: -config.file=/etc/loki/loki.yaml
+    configs:
+      - source: loki
+        target: /etc/loki/loki.yaml
+    volumes:
+      - /lab/appdata/monitoring/loki:/loki
+    mem_limit: 1g
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    container_name: prometheus
+    user: "1000:1000"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yaml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30d
+      - --storage.tsdb.retention.size=10GB
+      - --web.enable-remote-write-receiver
+    configs:
+      - source: prometheus
+        target: /etc/prometheus/prometheus.yaml
+    volumes:
+      - /lab/appdata/monitoring/prometheus:/prometheus
+    mem_limit: 1g
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:v1.21.3
+    container_name: alloy
+    hostname: homelab
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    configs:
+      - source: alloy
+        target: /etc/alloy/config.alloy
+    pid: host
+    cgroup: host
+    volumes:
+      - /lab/appdata/monitoring/alloy:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/log/journal:/var/log/journal:ro
+      - /run/log/journal:/run/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro,rslave
+      - /lab/docker/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    depends_on:
+      - loki
+      - prometheus
+    mem_limit: 512m
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.3.0
+    container_name: grafana
+    user: "1000:1000"
+    environment:
+      TZ: Europe/London
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:?set GF_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/homelab-health.json
+    configs:
+      - source: grafana-datasources
+        target: /etc/grafana/provisioning/datasources/datasources.yaml
+      - source: grafana-dashboards
+        target: /etc/grafana/provisioning/dashboards/dashboards.yaml
+      - source: dashboard-homelab-health
+        target: /etc/grafana/dashboards/homelab-health.json
+    volumes:
+      - /lab/appdata/monitoring/grafana:/var/lib/grafana
+    ports:
+      - 3000:3000
+    depends_on:
+      - loki
+      - prometheus
+    mem_limit: 512m
+    restart: unless-stopped
+
+configs:
+  loki:
+    content: |
+      auth_enabled: false
+      server:
+        http_listen_port: 3100
+        log_level: warn
+      common:
+        instance_addr: 127.0.0.1
+        path_prefix: /loki
+        replication_factor: 1
+        storage:
+          filesystem:
+            chunks_directory: /loki/chunks
+            rules_directory: /loki/rules
+        ring:
+          kvstore:
+            store: inmemory
+      schema_config:
+        configs:
+          - from: 2026-01-01
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: index_
+              period: 24h
+      ingester:
+        wal:
+          dir: /loki/wal
+          flush_on_shutdown: true
+      limits_config:
+        retention_period: 30d
+        reject_old_samples: true
+        reject_old_samples_max_age: 30d
+        ingestion_rate_mb: 16
+        ingestion_burst_size_mb: 32
+        volume_enabled: true
+      compactor:
+        working_directory: /loki/compactor
+        retention_enabled: true
+        delete_request_store: filesystem
+      analytics:
+        reporting_enabled: false
+  prometheus:
+    content: |
+      # Alloy pushes everything via remote write; Prometheus does no scraping itself.
+      global:
+        evaluation_interval: 1m
+  alloy:
+    content: |
+      // ---------- Logs ----------
+      loki.write "default" {
+        endpoint {
+          url = "http://loki:3100/loki/api/v1/push"
+        }
+      }
+
+      // Container logs, labelled by container / compose stack / service
+      discovery.docker "containers" {
+        host = "unix:///var/run/docker.sock"
+      }
+
+      discovery.relabel "containers" {
+        targets = []
+        rule {
+          source_labels = ["__meta_docker_container_name"]
+          regex         = "/(.*)"
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+          target_label  = "stack"
+        }
+        rule {
+          source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+          target_label  = "service"
+        }
+        rule {
+          source_labels = ["__meta_docker_container_log_stream"]
+          target_label  = "stream"
+        }
+      }
+
+      loki.source.docker "containers" {
+        host          = "unix:///var/run/docker.sock"
+        targets       = discovery.docker.containers.targets
+        relabel_rules = discovery.relabel.containers.rules
+        labels        = {job = "docker", host = "homelab"}
+        forward_to    = [loki.write.default.receiver]
+      }
+
+      // Host systemd journal, including kernel messages (transport="kernel")
+      loki.relabel "journal" {
+        forward_to = []
+        rule {
+          source_labels = ["__journal__systemd_unit"]
+          target_label  = "unit"
+        }
+        rule {
+          source_labels = ["__journal__transport"]
+          target_label  = "transport"
+        }
+        rule {
+          source_labels = ["__journal_priority_keyword"]
+          target_label  = "level"
+        }
+        rule {
+          source_labels = ["__journal_syslog_identifier"]
+          target_label  = "identifier"
+        }
+        rule {
+          source_labels = ["__journal__boot_id"]
+          target_label  = "boot_id"
+        }
+      }
+
+      loki.source.journal "host" {
+        path          = "/var/log/journal"
+        max_age       = "720h"
+        relabel_rules = loki.relabel.journal.rules
+        labels        = {job = "journal", host = "homelab"}
+        forward_to    = [loki.write.default.receiver]
+      }
+
+      // ---------- Metrics ----------
+      prometheus.remote_write "default" {
+        endpoint {
+          url = "http://prometheus:9090/api/v1/write"
+        }
+      }
+
+      // Host: RAM, swap, CPU, disk, memory pressure (PSI)
+      prometheus.exporter.unix "host" {
+        procfs_path = "/host/proc"
+        sysfs_path  = "/host/sys"
+        rootfs_path = "/host/root"
+      }
+
+      // Per-container memory / CPU
+      prometheus.exporter.cadvisor "containers" {
+        docker_host      = "unix:///var/run/docker.sock"
+        docker_only      = true
+        storage_duration = "5m"
+      }
+
+      // Per-process memory / CPU, grouped by process name
+      prometheus.exporter.process "procs" {
+        procfs_path = "/host/proc"
+        matcher {
+          name    = "{{.Comm}}"
+          cmdline = [".+"]
+        }
+      }
+
+      discovery.relabel "host_instance" {
+        targets = array.concat(
+          prometheus.exporter.unix.host.targets,
+          prometheus.exporter.cadvisor.containers.targets,
+          prometheus.exporter.process.procs.targets,
+        )
+        rule {
+          target_label = "instance"
+          replacement  = "homelab"
+        }
+      }
+
+      prometheus.scrape "local" {
+        targets         = discovery.relabel.host_instance.output
+        scrape_interval = "15s"
+        forward_to      = [prometheus.remote_write.default.receiver]
+      }
+  grafana-datasources:
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          uid: prometheus
+          type: prometheus
+          access: proxy
+          url: http://prometheus:9090
+          isDefault: true
+        - name: Loki
+          uid: loki
+          type: loki
+          access: proxy
+          url: http://loki:3100
+  grafana-dashboards:
+    content: |
+      apiVersion: 1
+      providers:
+        - name: homelab
+          folder: Homelab
+          type: file
+          allowUiUpdates: true
+          options:
+            path: /etc/grafana/dashboards
+  dashboard-homelab-health:
+    content: |
+      {
+        "title": "Homelab health",
+        "uid": "homelab-health",
+        "schemaVersion": 39,
+        "version": 1,
+        "editable": true,
+        "time": {
+          "from": "now-6h",
+          "to": "now"
+        },
+        "refresh": "1m",
+        "tags": [
+          "homelab"
+        ],
+        "annotations": {
+          "list": [
+            {
+              "name": "Reboots",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "enable": true,
+              "iconColor": "red",
+              "expr": "{job=\"journal\", transport=\"kernel\"} |= \"Linux version\"",
+              "titleFormat": "Boot"
+            }
+          ]
+        },
+        "templating": {
+          "list": [
+            {
+              "name": "container",
+              "type": "query",
+              "datasource": {
+                "type": "loki",
+                "uid": "loki"
+              },
+              "label": "Container",
+              "query": {
+                "label": "container",
+                "stream": "{job=\"docker\"}",
+                "type": 1
+              },
+              "definition": "label_values({job=\"docker\"}, container)",
+              "includeAll": true,
+              "multi": true,
+              "allValue": ".+",
+              "current": {
+                "text": "All",
+                "value": "$$__all"
+              },
+              "refresh": 2
+            }
+          ]
+        },
+        "panels": [
+          {
+            "type": "timeseries",
+            "title": "Host memory",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 0,
+              "w": 12,
+              "h": 8
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "custom": {
+                  "fillOpacity": 10,
+                  "stacking": {
+                    "mode": "none"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "table",
+                "placement": "right",
+                "calcs": [
+                  "max",
+                  "lastNotNull"
+                ]
+              },
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+                "legendFormat": "Used"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "B",
+                "expr": "node_memory_MemAvailable_bytes",
+                "legendFormat": "Available"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "C",
+                "expr": "node_memory_Cached_bytes + node_memory_Buffers_bytes",
+                "legendFormat": "Cache/buffers"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "D",
+                "expr": "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes",
+                "legendFormat": "Swap used"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "E",
+                "expr": "node_memory_MemTotal_bytes",
+                "legendFormat": "Total"
+              }
+            ],
+            "id": 1
+          },
+          {
+            "type": "timeseries",
+            "title": "Memory pressure (time stalled waiting on RAM)",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 12,
+              "y": 0,
+              "w": 12,
+              "h": 8
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "custom": {
+                  "fillOpacity": 10,
+                  "stacking": {
+                    "mode": "none"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "table",
+                "placement": "right",
+                "calcs": [
+                  "max",
+                  "lastNotNull"
+                ]
+              },
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "rate(node_pressure_memory_waiting_seconds_total[$$__rate_interval])",
+                "legendFormat": "Some tasks waiting"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "B",
+                "expr": "rate(node_pressure_memory_stalled_seconds_total[$$__rate_interval])",
+                "legendFormat": "All tasks stalled"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "C",
+                "expr": "rate(node_vmstat_pswpin[$$__rate_interval]) / 1000",
+                "legendFormat": "Swap-in (k pages/s)"
+              }
+            ],
+            "id": 2
+          },
+          {
+            "type": "timeseries",
+            "title": "Top 10 processes by memory (RSS)",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 8,
+              "w": 12,
+              "h": 8
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "custom": {
+                  "fillOpacity": 10,
+                  "stacking": {
+                    "mode": "none"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "table",
+                "placement": "right",
+                "calcs": [
+                  "max",
+                  "lastNotNull"
+                ]
+              },
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "topk(10, namedprocess_namegroup_memory_bytes{memtype=\"resident\"})",
+                "legendFormat": "{{groupname}}"
+              }
+            ],
+            "id": 3
+          },
+          {
+            "type": "timeseries",
+            "title": "Top 10 containers by memory",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 12,
+              "y": 8,
+              "w": 12,
+              "h": 8
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "bytes",
+                "custom": {
+                  "fillOpacity": 10,
+                  "stacking": {
+                    "mode": "none"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "table",
+                "placement": "right",
+                "calcs": [
+                  "max",
+                  "lastNotNull"
+                ]
+              },
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "topk(10, container_memory_working_set_bytes{name!=\"\"})",
+                "legendFormat": "{{name}}"
+              }
+            ],
+            "id": 4
+          },
+          {
+            "type": "timeseries",
+            "title": "Host CPU",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 16,
+              "w": 12,
+              "h": 8
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "custom": {
+                  "fillOpacity": 10,
+                  "stacking": {
+                    "mode": "none"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "table",
+                "placement": "right",
+                "calcs": [
+                  "max",
+                  "lastNotNull"
+                ]
+              },
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[$$__rate_interval]))",
+                "legendFormat": "CPU busy"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "B",
+                "expr": "avg(rate(node_cpu_seconds_total{mode=\"iowait\"}[$$__rate_interval]))",
+                "legendFormat": "IO wait"
+              }
+            ],
+            "id": 5
+          },
+          {
+            "type": "timeseries",
+            "title": "Top 10 processes by CPU",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 12,
+              "y": 16,
+              "w": 12,
+              "h": 8
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "percentunit",
+                "custom": {
+                  "fillOpacity": 10,
+                  "stacking": {
+                    "mode": "none"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "table",
+                "placement": "right",
+                "calcs": [
+                  "max",
+                  "lastNotNull"
+                ]
+              },
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "topk(10, rate(namedprocess_namegroup_cpu_seconds_total[$$__rate_interval]))",
+                "legendFormat": "{{groupname}} {{mode}}"
+              }
+            ],
+            "id": 6
+          },
+          {
+            "type": "logs",
+            "title": "OOM killer, hung tasks & kernel errors",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 24,
+              "w": 24,
+              "h": 10
+            },
+            "options": {
+              "showTime": true,
+              "wrapLogMessage": true,
+              "sortOrder": "Descending",
+              "enableLogDetails": true
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "loki",
+                  "uid": "loki"
+                },
+                "refId": "A",
+                "expr": "{job=\"journal\", transport=\"kernel\"} |~ \"(?i)out of memory|oom-kill|oom_reaper|killed process|blocked for more than|hung_task|soft lockup|call trace|segfault\""
+              }
+            ],
+            "id": 7
+          },
+          {
+            "type": "logs",
+            "title": "All kernel messages",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 34,
+              "w": 24,
+              "h": 10
+            },
+            "options": {
+              "showTime": true,
+              "wrapLogMessage": true,
+              "sortOrder": "Descending",
+              "enableLogDetails": true
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "loki",
+                  "uid": "loki"
+                },
+                "refId": "A",
+                "expr": "{job=\"journal\", transport=\"kernel\"}"
+              }
+            ],
+            "id": 8
+          },
+          {
+            "type": "logs",
+            "title": "Journal errors (all services)",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 44,
+              "w": 24,
+              "h": 10
+            },
+            "options": {
+              "showTime": true,
+              "wrapLogMessage": true,
+              "sortOrder": "Descending",
+              "enableLogDetails": true
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "loki",
+                  "uid": "loki"
+                },
+                "refId": "A",
+                "expr": "{job=\"journal\", level=~\"err|crit|alert|emerg\"}"
+              }
+            ],
+            "id": 9
+          },
+          {
+            "type": "logs",
+            "title": "Container logs ($$container)",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 54,
+              "w": 24,
+              "h": 12
+            },
+            "options": {
+              "showTime": true,
+              "wrapLogMessage": true,
+              "sortOrder": "Descending",
+              "enableLogDetails": true
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "loki",
+                  "uid": "loki"
+                },
+                "refId": "A",
+                "expr": "{job=\"docker\", container=~\"$$container\"}"
+              }
+            ],
+            "id": 10
+          }
+        ]
+      }
