@@ -235,11 +235,13 @@ configs:
         rootfs_path = "/host/root"
       }
 
-      // Per-container memory / CPU
+      // Per-container (name label) and per-systemd-service memory / CPU.
+      // docker_only = true silently drops all containers on this host (containerd image store), so keep it false.
       prometheus.exporter.cadvisor "containers" {
-        docker_host      = "unix:///var/run/docker.sock"
-        docker_only      = true
-        storage_duration = "5m"
+        docker_host            = "unix:///var/run/docker.sock"
+        docker_only            = false
+        store_container_labels = false
+        storage_duration       = "5m"
       }
 
       // Per-process memory / CPU, grouped by process name
