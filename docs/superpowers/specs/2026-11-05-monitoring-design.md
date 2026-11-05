@@ -34,6 +34,12 @@ On 20 Oct 2026 homelab ran out of memory, hung, and had to be hard rebooted. Not
 - Grafana admin password comes from a `GF_ADMIN_PASSWORD` Portainer stack variable, never committed. Data sources (Loki, Prometheus) and the dashboard are provisioned.
 - The stack uses its own default network. Nothing joins `proxy-net`.
 
+## Changes made during deployment
+
+- cadvisor uses `docker_only = false` (with `store_container_labels = false`). With `true` it silently reported no containers on this host. Alloy also mounts the Docker root at its real path (`/lab/docker/docker`) and `/run/containerd/containerd.sock`.
+- On first start Alloy backfills the last 30 days of the journal (about 20 minutes). Container log lines older than 30 days are rejected by Loki, which is expected.
+- Alloy's 512 MB limit is mostly reclaimable kernel cache from scanning `/proc` (about 15 MB is actual process memory), so it sits at the limit without being OOM-killed.
+
 ## Left to the builder
 
 - Exact dashboard panel queries and layout.
