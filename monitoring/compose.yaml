@@ -58,7 +58,8 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/host/root:ro,rslave
-      - /lab/docker/docker:/var/lib/docker:ro
+      - /lab/docker/docker:/lab/docker/docker:ro
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
       - /dev/disk:/dev/disk:ro
     depends_on:
       - loki
