@@ -41,6 +41,9 @@ On 20 Oct 2026 homelab ran out of memory, hung, and had to be hard rebooted. Not
 - Alloy at 512 MB was OOM-killed 17 times in its first 24 hours and swapped heavily inside its cgroup. Its limit is now 1 GB with `memswap_limit: 1g` (no swap) and `GOMEMLIMIT=800MiB`, and cadvisor's `container_label_*` labels are dropped before remote write.
 - Alerting: Grafana file-provisioned contact point (webhook to ntfy `ajb-monitor?template=grafana`, Bearer token from the `NTFY_TOKEN` stack variable), with the rule "RAM above 95%" for 2 minutes. Grafana expands env vars in provisioning files, so templates use `.Values`, never `$values`.
 
+- 2026-11-06: added `smartctl-exporter` (privileged, 5 min poll, skips drives in standby so the backup disk `sdd` isn't woken), scraped by Alloy. Dashboard has "Drive temperatures" and "Drive health (SMART)". More alert rules: swap above 90% for 10 minutes, memory pressure above 20% for 5 minutes, any kernel OOM kill (Loki), drive temperature (above 50°C SATA/SAS, above 70°C NVMe), SMART health failed (excluding nvme0, whose Critical Warning 0x04 is a known WD firmware bug), and reallocated, pending or uncorrectable sectors or NVMe media errors rising over 1 hour.
+- Compose doesn't recreate a container when inline `configs: content:` changes, so each service has a `homelab.config-hash` label generated from its config files.
+
 ## Left to the builder
 
 - Exact dashboard panel queries and layout.
