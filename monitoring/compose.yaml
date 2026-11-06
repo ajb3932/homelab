@@ -1,6 +1,6 @@
 # Monitoring: Alloy collects logs (containers + host journal/kernel) and metrics
 # (host RAM/swap/PSI, per-container, per-process) -> Loki (logs) + Prometheus (metrics) -> Grafana.
-# Grafana: http://homelab:3000  (admin password = GF_ADMIN_PASSWORD stack variable in Portainer)
+# Grafana: http://homelab:3000  (stack variables in Portainer: GF_ADMIN_PASSWORD, NTFY_TOKEN for alerts)
 # Configs are inlined below (compose `configs: content:`) because Portainer git stacks
 # can't reliably bind-mount files from the repo. Literal $ is written as $$.
 services:
@@ -61,10 +61,13 @@ services:
       - /lab/docker/docker:/lab/docker/docker:ro
       - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
       - /dev/disk:/dev/disk:ro
+    environment:
+      GOMEMLIMIT: 800MiB
     depends_on:
       - loki
       - prometheus
-    mem_limit: 512m
+    mem_limit: 1g
+    memswap_limit: 1g
     restart: unless-stopped
 
   grafana:
@@ -79,6 +82,7 @@ services:
       GF_ANALYTICS_REPORTING_ENABLED: "false"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/homelab-health.json
+      NTFY_TOKEN: ${NTFY_TOKEN:-}
     configs:
       - source: grafana-datasources
         target: /etc/grafana/provisioning/datasources/datasources.yaml
@@ -86,6 +90,8 @@ services:
         target: /etc/grafana/provisioning/dashboards/dashboards.yaml
       - source: dashboard-homelab-health
         target: /etc/grafana/dashboards/homelab-health.json
+      - source: grafana-alerting
+        target: /etc/grafana/provisioning/alerting/alerting.yaml
     volumes:
       - /lab/appdata/monitoring/grafana:/var/lib/grafana
     ports:
@@ -268,7 +274,17 @@ configs:
       prometheus.scrape "local" {
         targets         = discovery.relabel.host_instance.output
         scrape_interval = "15s"
-        forward_to      = [prometheus.remote_write.default.receiver]
+        forward_to      = [prometheus.relabel.trim.receiver]
+      }
+
+      // cadvisor still attaches every docker label (container_label_*) despite
+      // store_container_labels = false; drop them to keep series small.
+      prometheus.relabel "trim" {
+        forward_to = [prometheus.remote_write.default.receiver]
+        rule {
+          action = "labeldrop"
+          regex  = "container_label_.*"
+        }
       }
   grafana-datasources:
     content: |
@@ -855,3 +871,59 @@ configs:
           }
         ]
       }
+  grafana-alerting:
+    content: |
+      # Grafana alerting -> ntfy. Grafana expands env vars in this file, so never use a
+      # bare $$ in templates (use .Values / .Labels instead of $$values / $$labels).
+      apiVersion: 1
+      contactPoints:
+        - orgId: 1
+          name: ntfy
+          receivers:
+            - uid: ntfy
+              type: webhook
+              settings:
+                url: https://ntfy.piandchips.uk/ajb-monitor?template=grafana&priority=high&tags=warning
+                httpMethod: POST
+                authorization_scheme: Bearer
+                authorization_credentials: $$NTFY_TOKEN
+      policies:
+        - orgId: 1
+          receiver: ntfy
+          group_by: ["alertname"]
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 4h
+      groups:
+        - orgId: 1
+          name: homelab
+          folder: Homelab
+          interval: 1m
+          rules:
+            - uid: ram-above-95
+              title: RAM above 95%
+              condition: C
+              for: 2m
+              noDataState: OK
+              execErrState: Error
+              labels:
+                severity: critical
+              annotations:
+                summary: 'homelab RAM is {{ printf "%.1f" .Values.A.Value }}% used'
+                description: Check the Homelab health dashboard (http://homelab:3000) for the top processes and containers by memory.
+              data:
+                - refId: A
+                  datasourceUid: prometheus
+                  relativeTimeRange: {from: 300, to: 0}
+                  model:
+                    refId: A
+                    instant: true
+                    expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+                - refId: C
+                  datasourceUid: __expr__
+                  model:
+                    refId: C
+                    type: threshold
+                    expression: A
+                    conditions:
+                      - evaluator: {type: gt, params: [95]}
