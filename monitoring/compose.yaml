@@ -1,5 +1,5 @@
 # Monitoring: Alloy collects logs (containers + host journal/kernel) and metrics
-# (host RAM/swap/PSI, per-container, per-process) -> Loki (logs) + Prometheus (metrics) -> Grafana.
+# (host RAM/swap/PSI, per-container, per-process, SMART) -> Loki (logs) + Prometheus (metrics) -> Grafana.
 # Grafana: http://homelab:3000  (stack variables in Portainer: GF_ADMIN_PASSWORD, NTFY_TOKEN for alerts)
 # Configs are inlined below (compose `configs: content:`) because Portainer git stacks
 # can't reliably bind-mount files from the repo. Literal $ is written as $$.
@@ -68,6 +68,18 @@ services:
       - prometheus
     mem_limit: 1g
     memswap_limit: 1g
+    restart: unless-stopped
+
+  smartctl-exporter:
+    image: prometheuscommunity/smartctl-exporter:v0.15.0
+    container_name: smartctl-exporter
+    # needs raw device access for SMART; drives in standby are skipped (default --smartctl.powermode-check=standby)
+    privileged: true
+    user: root
+    command:
+      - --smartctl.interval=5m
+      - --smartctl.rescan=10m
+    mem_limit: 128m
     restart: unless-stopped
 
   grafana:
@@ -285,6 +297,14 @@ configs:
           action = "labeldrop"
           regex  = "container_label_.*"
         }
+      }
+
+      // SMART data (temps, power-on hours, health, sector counts) from smartctl-exporter.
+      // The exporter skips drives in standby, so the backup disk (sdd) isn't woken.
+      prometheus.scrape "smartctl" {
+        targets         = [{"__address__" = "smartctl-exporter:9633", "instance" = "homelab"}]
+        scrape_interval = "60s"
+        forward_to      = [prometheus.relabel.trim.receiver]
       }
   grafana-datasources:
     content: |
@@ -746,6 +766,172 @@ configs:
             "id": 6
           },
           {
+            "type": "timeseries",
+            "title": "Drive temperatures",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 0,
+              "y": 24,
+              "w": 12,
+              "h": 8
+            },
+            "fieldConfig": {
+              "defaults": {
+                "unit": "celsius",
+                "custom": {
+                  "fillOpacity": 10,
+                  "stacking": {
+                    "mode": "none"
+                  }
+                }
+              },
+              "overrides": []
+            },
+            "options": {
+              "legend": {
+                "displayMode": "table",
+                "placement": "right",
+                "calcs": [
+                  "max",
+                  "lastNotNull"
+                ]
+              },
+              "tooltip": {
+                "mode": "multi",
+                "sort": "desc"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "smartctl_device_temperature{temperature_type=\"current\"}",
+                "legendFormat": "{{device}}"
+              }
+            ],
+            "id": 7
+          },
+          {
+            "type": "table",
+            "title": "Drive health (SMART)",
+            "datasource": {
+              "type": "prometheus",
+              "uid": "prometheus"
+            },
+            "gridPos": {
+              "x": 12,
+              "y": 24,
+              "w": 12,
+              "h": 8
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "A",
+                "expr": "max by (device) (smartctl_device_power_on_seconds) / 3600",
+                "instant": true,
+                "format": "table"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "B",
+                "expr": "max by (device) (smartctl_device_smart_status)",
+                "instant": true,
+                "format": "table"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "C",
+                "expr": "max by (device) (smartctl_device_attribute{attribute_name=\"Reallocated_Sector_Ct\",attribute_value_type=\"raw\"})",
+                "instant": true,
+                "format": "table"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "D",
+                "expr": "max by (device) (smartctl_device_attribute{attribute_name=\"Current_Pending_Sector\",attribute_value_type=\"raw\"})",
+                "instant": true,
+                "format": "table"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "E",
+                "expr": "max by (device) (smartctl_device_media_errors)",
+                "instant": true,
+                "format": "table"
+              },
+              {
+                "datasource": {
+                  "type": "prometheus",
+                  "uid": "prometheus"
+                },
+                "refId": "F",
+                "expr": "max by (device) (smartctl_device_percentage_used)",
+                "instant": true,
+                "format": "table"
+              }
+            ],
+            "transformations": [
+              {
+                "id": "merge",
+                "options": {}
+              },
+              {
+                "id": "organize",
+                "options": {
+                  "excludeByName": {
+                    "Time": true
+                  },
+                  "renameByName": {
+                    "Value #A": "Power-on hours",
+                    "Value #B": "SMART passed (1=yes)",
+                    "Value #C": "Reallocated",
+                    "Value #D": "Pending",
+                    "Value #E": "NVMe media errors",
+                    "Value #F": "NVMe wear %"
+                  }
+                }
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "decimals": 0
+              },
+              "overrides": []
+            },
+            "options": {
+              "showHeader": true,
+              "sortBy": [
+                {
+                  "displayName": "device"
+                }
+              ]
+            },
+            "description": "Drives in standby (e.g. the backup disk sdd) are skipped and only appear while awake. nvme0 shows FAILED due to a known WD firmware bug (Critical Warning 0x04).",
+            "id": 8
+          },
+          {
             "type": "logs",
             "title": "OOM killer, hung tasks & kernel errors",
             "datasource": {
@@ -754,7 +940,7 @@ configs:
             },
             "gridPos": {
               "x": 0,
-              "y": 24,
+              "y": 32,
               "w": 24,
               "h": 10
             },
@@ -774,7 +960,7 @@ configs:
                 "expr": "{job=\"journal\", transport=\"kernel\"} |~ \"(?i)out of memory|oom-kill|oom_reaper|killed process|blocked for more than|hung_task|soft lockup|call trace|segfault\""
               }
             ],
-            "id": 7
+            "id": 9
           },
           {
             "type": "logs",
@@ -785,7 +971,7 @@ configs:
             },
             "gridPos": {
               "x": 0,
-              "y": 34,
+              "y": 42,
               "w": 24,
               "h": 10
             },
@@ -805,7 +991,7 @@ configs:
                 "expr": "{job=\"journal\", transport=\"kernel\"}"
               }
             ],
-            "id": 8
+            "id": 10
           },
           {
             "type": "logs",
@@ -816,7 +1002,7 @@ configs:
             },
             "gridPos": {
               "x": 0,
-              "y": 44,
+              "y": 52,
               "w": 24,
               "h": 10
             },
@@ -836,7 +1022,7 @@ configs:
                 "expr": "{job=\"journal\", level=~\"err|crit|alert|emerg\"}"
               }
             ],
-            "id": 9
+            "id": 11
           },
           {
             "type": "logs",
@@ -847,7 +1033,7 @@ configs:
             },
             "gridPos": {
               "x": 0,
-              "y": 54,
+              "y": 62,
               "w": 24,
               "h": 12
             },
@@ -867,14 +1053,14 @@ configs:
                 "expr": "{job=\"docker\", container=~\"$$container\"}"
               }
             ],
-            "id": 10
+            "id": 12
           }
         ]
       }
   grafana-alerting:
     content: |
       # Grafana alerting -> ntfy. Grafana expands env vars in this file, so never use a
-      # bare $$ in templates (use .Values / .Labels instead of $$values / $$labels).
+      # dollar sign in templates or queries (use .Values / .Labels in templates).
       apiVersion: 1
       contactPoints:
         - orgId: 1
@@ -927,3 +1113,119 @@ configs:
                     expression: A
                     conditions:
                       - evaluator: {type: gt, params: [95]}
+            - uid: swap-above-90
+              title: Swap above 90%
+              condition: C
+              for: 10m
+              noDataState: OK
+              execErrState: Error
+              labels: {severity: warning}
+              annotations:
+                summary: 'homelab swap is {{ printf "%.0f" .Values.A.Value }}% full'
+                description: RAM is overflowing into swap. Check top processes/containers on http://homelab:3000.
+              data:
+                - refId: A
+                  datasourceUid: prometheus
+                  relativeTimeRange: {from: 600, to: 0}
+                  model: {refId: A, instant: true, expr: "100 * (1 - node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes)"}
+                - refId: C
+                  datasourceUid: __expr__
+                  model: {refId: C, type: threshold, expression: A, conditions: [{evaluator: {type: gt, params: [90]}}]}
+            - uid: memory-pressure
+              title: Memory pressure high
+              condition: C
+              for: 5m
+              noDataState: OK
+              execErrState: Error
+              labels: {severity: critical}
+              annotations:
+                summary: 'homelab tasks stalled waiting for RAM {{ printf "%.0f" .Values.A.Value }}% of the time'
+                description: Early warning of a memory hang (like 20 Oct). Check http://homelab:3000 now.
+              data:
+                - refId: A
+                  datasourceUid: prometheus
+                  relativeTimeRange: {from: 600, to: 0}
+                  model: {refId: A, instant: true, expr: "100 * rate(node_pressure_memory_waiting_seconds_total[5m])"}
+                - refId: C
+                  datasourceUid: __expr__
+                  model: {refId: C, type: threshold, expression: A, conditions: [{evaluator: {type: gt, params: [20]}}]}
+            - uid: oom-kill
+              title: OOM kill
+              condition: C
+              for: 0s
+              noDataState: OK
+              execErrState: Error
+              labels: {severity: critical}
+              annotations:
+                summary: 'Kernel OOM-killed {{ .Labels.process }} on homelab'
+                description: See the "OOM killer, hung tasks & kernel errors" panel on http://homelab:3000.
+              data:
+                - refId: A
+                  datasourceUid: loki
+                  relativeTimeRange: {from: 300, to: 0}
+                  model:
+                    refId: A
+                    queryType: instant
+                    expr: 'sum by (process) (count_over_time({job="journal", transport="kernel"} |= "Killed process" | regexp `Killed process \d+ \((?P<process>[^)]+)\)` [5m]))'
+                - refId: C
+                  datasourceUid: __expr__
+                  model: {refId: C, type: threshold, expression: A, conditions: [{evaluator: {type: gt, params: [0]}}]}
+            - uid: drive-temp
+              title: Drive temperature high
+              condition: C
+              for: 10m
+              noDataState: OK
+              execErrState: Error
+              labels: {severity: warning}
+              annotations:
+                summary: '{{ .Labels.device }} is {{ printf "%.0f" .Values.A.Value }}°C (limit 50°C SATA/SAS, 70°C NVMe)'
+              data:
+                - refId: A
+                  datasourceUid: prometheus
+                  relativeTimeRange: {from: 600, to: 0}
+                  model:
+                    refId: A
+                    instant: true
+                    expr: 'max by (device) (smartctl_device_temperature{temperature_type="current", device=~"sd.+"} > 50 or smartctl_device_temperature{temperature_type="current", device=~"nvme.+"} > 70)'
+                - refId: C
+                  datasourceUid: __expr__
+                  model: {refId: C, type: threshold, expression: A, conditions: [{evaluator: {type: gt, params: [0]}}]}
+            - uid: smart-failed
+              title: SMART health check failed
+              condition: C
+              for: 5m
+              noDataState: OK
+              execErrState: Error
+              labels: {severity: critical}
+              annotations:
+                summary: '{{ .Labels.device }} SMART overall health is FAILED'
+                description: nvme0 is excluded (WD firmware bug sets Critical Warning 0x04); its media errors are alerted separately.
+              data:
+                - refId: A
+                  datasourceUid: prometheus
+                  relativeTimeRange: {from: 600, to: 0}
+                  model: {refId: A, instant: true, expr: 'max by (device) (smartctl_device_smart_status{device!="nvme0"})'}
+                - refId: C
+                  datasourceUid: __expr__
+                  model: {refId: C, type: threshold, expression: A, conditions: [{evaluator: {type: lt, params: [1]}}]}
+            - uid: drive-errors-rising
+              title: Drive errors increasing
+              condition: C
+              for: 0s
+              noDataState: OK
+              execErrState: Error
+              labels: {severity: critical}
+              annotations:
+                summary: '{{ .Labels.device }}: {{ .Labels.attribute_name }} went up by {{ printf "%.0f" .Values.A.Value }} in the last hour'
+                description: Reallocated / pending / uncorrectable sectors (SATA/SAS) or media errors (NVMe) increased. Plan a replacement and check backups.
+              data:
+                - refId: A
+                  datasourceUid: prometheus
+                  relativeTimeRange: {from: 3600, to: 0}
+                  model:
+                    refId: A
+                    instant: true
+                    expr: 'max by (device, attribute_name) (delta(smartctl_device_attribute{attribute_name=~"Reallocated_Sector_Ct|Current_Pending_Sector|Offline_Uncorrectable", attribute_value_type="raw"}[1h]) > 0 or label_replace(delta(smartctl_device_media_errors[1h]), "attribute_name", "Media_Errors", "device", ".*") > 0)'
+                - refId: C
+                  datasourceUid: __expr__
+                  model: {refId: C, type: threshold, expression: A, conditions: [{evaluator: {type: gt, params: [0]}}]}
