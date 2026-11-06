@@ -7,6 +7,8 @@ services:
   loki:
     image: grafana/loki:3.7.9
     container_name: loki
+    labels:
+      homelab.config-hash: 1e8f2b4f0686
     user: "1000:1000"
     command: -config.file=/etc/loki/loki.yaml
     configs:
@@ -20,6 +22,8 @@ services:
   prometheus:
     image: prom/prometheus:v3.15.1
     container_name: prometheus
+    labels:
+      homelab.config-hash: 05fcf9ed9bde
     user: "1000:1000"
     command:
       - --config.file=/etc/prometheus/prometheus.yaml
@@ -38,6 +42,8 @@ services:
   alloy:
     image: grafana/alloy:v1.21.3
     container_name: alloy
+    labels:
+      homelab.config-hash: 489f4354f6a6
     hostname: homelab
     command:
       - run
@@ -85,6 +91,8 @@ services:
   grafana:
     image: grafana/grafana:13.3.0
     container_name: grafana
+    labels:
+      homelab.config-hash: cac44d40e9fd
     user: "1000:1000"
     environment:
       TZ: Europe/London
