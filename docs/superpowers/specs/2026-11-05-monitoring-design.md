@@ -38,7 +38,8 @@ On 20 Oct 2026 homelab ran out of memory, hung, and had to be hard rebooted. Not
 
 - cadvisor uses `docker_only = false` (with `store_container_labels = false`). With `true` it silently reported no containers on this host. Alloy also mounts the Docker root at its real path (`/lab/docker/docker`) and `/run/containerd/containerd.sock`.
 - On first start Alloy backfills the last 30 days of the journal (about 20 minutes). Container log lines older than 30 days are rejected by Loki, which is expected.
-- Alloy's 512 MB limit is mostly reclaimable kernel cache from scanning `/proc` (about 15 MB is actual process memory), so it sits at the limit without being OOM-killed.
+- Alloy at 512 MB was OOM-killed 17 times in its first 24 hours and swapped heavily inside its cgroup. Its limit is now 1 GB with `memswap_limit: 1g` (no swap) and `GOMEMLIMIT=800MiB`, and cadvisor's `container_label_*` labels are dropped before remote write.
+- Alerting: Grafana file-provisioned contact point (webhook to ntfy `ajb-monitor?template=grafana`, Bearer token from the `NTFY_TOKEN` stack variable), with the rule "RAM above 95%" for 2 minutes. Grafana expands env vars in provisioning files, so templates use `.Values`, never `$values`.
 
 ## Left to the builder
 
