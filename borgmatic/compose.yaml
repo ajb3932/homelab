@@ -2,9 +2,25 @@ services:
   borgmatic:
     image: ghcr.io/borgmatic-collective/borgmatic
     container_name: borgmatic
+    # Backup disk (/lab/archive) is only mounted by /lab/scripts/borgmatic.sh. Portainer's
+    # GitOps poller starts this container every 5 min; without the disk it now exits 0
+    # instead of failing on missing bind-mount paths. With the disk, bind its subfolders
+    # to the usual paths and hand over to the image's normal /init.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ ! -d /mnt/archive/borg/data ]; then echo "Backup disk not mounted - exiting cleanly"; exit 0; fi
+        for p in borg/data:/mnt/borg-repository borg/cache:/root/.cache/borg nextcloud:/src/nextcloud; do
+          mkdir -p "$${p#*:}" && mount --bind "/mnt/archive/$${p%%:*}" "$${p#*:}" || exit 1
+        done
+        exec /init
+    cap_add:
+      - SYS_ADMIN                   # for the bind mounts above (docker.sock already grants root)
+    security_opt:
+      - apparmor=unconfined
     volumes:
-      - /lab/archive/borg/data:/mnt/borg-repository
-      - /lab/archive/borg/cache:/root/.cache/borg
+      - /lab/archive:/mnt/archive:rslave
       - /lab/appdata/borgmatic/.config:/etc/borgmatic.d/
       - /lab/appdata/borgmatic/borg_keys:/root/.config/borg
       - /lab/appdata/borgmatic/.ssh:/root/.ssh
@@ -12,7 +28,6 @@ services:
       # Source Dirs
       - /lab/appdata:/src/appdata
       - /lab/immich/:/src/photos
-      - /lab/archive/nextcloud:/src/nextcloud
       - /lab/data/:/src/data
       - /lab/scripts:/src/lab-extra/scripts
     restart: "no"
