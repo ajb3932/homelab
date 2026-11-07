@@ -43,7 +43,7 @@ services:
     image: grafana/alloy:v1.21.3
     container_name: alloy
     labels:
-      homelab.config-hash: 8304a2369cac
+      homelab.config-hash: fddb940588f5
     hostname: homelab
     command:
       - run
@@ -268,6 +268,10 @@ configs:
         docker_only            = false
         store_container_labels = false
         storage_duration       = "5m"
+        // Only memory (and CPU) per container is used. The default "disk"
+        // metric du-walks every container filesystem (GetDirUsage), which was
+        // ~70% of Alloy's CPU and ~500MB of dentry slab charged to its cgroup.
+        enabled_metrics        = ["cpu", "memory"]
       }
 
       // Per-process memory / CPU, grouped by process name
