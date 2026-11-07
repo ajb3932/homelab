@@ -43,7 +43,7 @@ services:
     image: grafana/alloy:v1.21.3
     container_name: alloy
     labels:
-      homelab.config-hash: 489f4354f6a6
+      homelab.config-hash: 8304a2369cac
     hostname: homelab
     command:
       - run
@@ -271,8 +271,16 @@ configs:
       }
 
       // Per-process memory / CPU, grouped by process name
+      // Only resident memory / CPU per name group is used. The defaults
+      // (threads, smaps, recheck) walk ~5k threads and every smaps file per
+      // scrape, which took longer than 15s, so scrapes piled up behind the
+      // collector lock (~500 stuck goroutines) and pinned Alloy at its limit.
       prometheus.exporter.process "procs" {
-        procfs_path = "/host/proc"
+        procfs_path       = "/host/proc"
+        track_children    = false
+        track_threads     = false
+        gather_smaps      = false
+        recheck_on_scrape = false
         matcher {
           name    = "{{.Comm}}"
           cmdline = [".+"]
